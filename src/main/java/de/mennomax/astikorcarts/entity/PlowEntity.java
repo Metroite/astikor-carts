@@ -6,40 +6,40 @@ import de.mennomax.astikorcarts.config.AstikorCartsConfig;
 import de.mennomax.astikorcarts.inventory.container.PlowContainer;
 import de.mennomax.astikorcarts.util.CartItemStackHandler;
 import de.mennomax.astikorcarts.util.ProxyItemUseContext;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolItem;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.DiggerItem;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
 import net.minecraftforge.items.ItemStackHandler;
 
 public final class PlowEntity extends AbstractDrawnInventoryEntity {
     private static final int SLOT_COUNT = 3;
     private static final double BLADEOFFSET = 1.7D;
-    private static final DataParameter<Boolean> PLOWING = EntityDataManager.defineId(PlowEntity.class, DataSerializers.BOOLEAN);
-    private static final ImmutableList<DataParameter<ItemStack>> TOOLS = ImmutableList.of(
-        EntityDataManager.defineId(PlowEntity.class, DataSerializers.ITEM_STACK),
-        EntityDataManager.defineId(PlowEntity.class, DataSerializers.ITEM_STACK),
-        EntityDataManager.defineId(PlowEntity.class, DataSerializers.ITEM_STACK));
+    private static final EntityDataAccessor<Boolean> PLOWING = SynchedEntityData.defineId(PlowEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final ImmutableList<EntityDataAccessor<ItemStack>> TOOLS = ImmutableList.of(
+        SynchedEntityData.defineId(PlowEntity.class, EntityDataSerializers.ITEM_STACK),
+        SynchedEntityData.defineId(PlowEntity.class, EntityDataSerializers.ITEM_STACK),
+        SynchedEntityData.defineId(PlowEntity.class, EntityDataSerializers.ITEM_STACK));
 
-    public PlowEntity(final EntityType<? extends Entity> entityTypeIn, final World worldIn) {
+    public PlowEntity(final EntityType<? extends Entity> entityTypeIn, final Level worldIn) {
         super(entityTypeIn, worldIn);
         this.spacing = 1.3D;
     }
@@ -77,11 +77,11 @@ public final class PlowEntity extends AbstractDrawnInventoryEntity {
             return;
         }
         if (!this.level.isClientSide) {
-            PlayerEntity player = null;
-            if (this.getPulling() instanceof PlayerEntity) {
-                player = (PlayerEntity) this.getPulling();
-            } else if (this.getPulling().getControllingPassenger() instanceof PlayerEntity) {
-                player = (PlayerEntity) this.getPulling().getControllingPassenger();
+            Player player = null;
+            if (this.getPulling() instanceof Player) {
+                player = (Player) this.getPulling();
+            } else if (this.getPulling().getControllingPassenger() instanceof Player) {
+                player = (Player) this.getPulling().getControllingPassenger();
             }
             if (this.entityData.get(PLOWING) && player != null) {
                 if (this.xo != this.getX() || this.zo != this.getZ()) {
@@ -91,17 +91,17 @@ public final class PlowEntity extends AbstractDrawnInventoryEntity {
         }
     }
 
-    private void plow(final PlayerEntity player) {
+    private void plow(final Player player) {
         for (int i = 0; i < SLOT_COUNT; i++) {
             final ItemStack stack = this.getStackInSlot(i);
-            if (stack.getItem() instanceof ToolItem) {
+            if (stack.getItem() instanceof DiggerItem) {
                 final float offset = 38.0F - i * 38.0F;
-                final double blockPosX = this.getX() + MathHelper.sin((float) Math.toRadians(this.yRot - offset)) * BLADEOFFSET;
-                final double blockPosZ = this.getZ() - MathHelper.cos((float) Math.toRadians(this.yRot - offset)) * BLADEOFFSET;
+                final double blockPosX = this.getX() + Mth.sin((float) Math.toRadians(this.getYRot() - offset)) * BLADEOFFSET;
+                final double blockPosZ = this.getZ() - Mth.cos((float) Math.toRadians(this.getYRot() - offset)) * BLADEOFFSET;
                 final BlockPos blockPos = new BlockPos(blockPosX, this.getY() - 0.5D, blockPosZ);
                 final boolean damageable = stack.isDamageableItem();
                 final int count = stack.getCount();
-                stack.getItem().useOn(new ProxyItemUseContext(player, stack, new BlockRayTraceResult(Vector3d.ZERO, Direction.UP, blockPos, false)));
+                stack.getItem().useOn(new ProxyItemUseContext(player, stack, new BlockHitResult(Vec3.ZERO, Direction.UP, blockPos, false)));
                 if (damageable && stack.getCount() < count) {
                     this.playSound(SoundEvents.ITEM_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
                     this.updateSlot(i);
@@ -111,15 +111,15 @@ public final class PlowEntity extends AbstractDrawnInventoryEntity {
     }
 
     @Override
-    public ActionResultType interact(final PlayerEntity player, final Hand hand) {
+    public InteractionResult interact(final Player player, final InteractionHand hand) {
         if (player.isSecondaryUseActive()) {
             this.openContainer(player);
-            return ActionResultType.sidedSuccess(this.level.isClientSide);
+            return InteractionResult.sidedSuccess(this.level.isClientSide);
         }
         if (!this.level.isClientSide) {
             this.entityData.set(PLOWING, !this.entityData.get(PLOWING));
         }
-        return ActionResultType.sidedSuccess(this.level.isClientSide);
+        return InteractionResult.sidedSuccess(this.level.isClientSide);
     }
 
     public void updateSlot(final int slot) {
@@ -146,28 +146,28 @@ public final class PlowEntity extends AbstractDrawnInventoryEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(PLOWING, false);
-        for (final DataParameter<ItemStack> param : TOOLS) {
+        for (final EntityDataAccessor<ItemStack> param : TOOLS) {
             this.entityData.define(param, ItemStack.EMPTY);
         }
     }
 
     @Override
-    protected void readAdditionalSaveData(final CompoundNBT compound) {
+    protected void readAdditionalSaveData(final CompoundTag compound) {
         super.readAdditionalSaveData(compound);
         this.entityData.set(PLOWING, compound.getBoolean("Plowing"));
     }
 
     @Override
-    protected void addAdditionalSaveData(final CompoundNBT compound) {
+    protected void addAdditionalSaveData(final CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("Plowing", this.entityData.get(PLOWING));
 
     }
 
-    private void openContainer(final PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) {
-            NetworkHooks.openGui((ServerPlayerEntity) player,
-                new SimpleNamedContainerProvider((windowId, playerInventory, p) -> new PlowContainer(windowId, playerInventory, this), this.getDisplayName()),
+    private void openContainer(final Player player) {
+        if (player instanceof ServerPlayer) {
+            NetworkHooks.openGui((ServerPlayer) player,
+                new SimpleMenuProvider((windowId, playerInventory, p) -> new PlowContainer(windowId, playerInventory, this), this.getDisplayName()),
                 buf -> buf.writeInt(this.getId())
             );
         }

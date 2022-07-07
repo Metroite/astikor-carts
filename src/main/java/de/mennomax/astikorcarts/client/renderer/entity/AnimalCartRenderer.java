@@ -1,37 +1,33 @@
 package de.mennomax.astikorcarts.client.renderer.entity;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import de.mennomax.astikorcarts.AstikorCarts;
 import de.mennomax.astikorcarts.client.renderer.entity.model.AnimalCartModel;
 import de.mennomax.astikorcarts.entity.AnimalCartEntity;
 import de.mennomax.astikorcarts.util.Mat4f;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.model.HorseModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HorseRenderer;
-import net.minecraft.client.renderer.entity.model.HorseModel;
-import net.minecraft.client.renderer.model.ModelRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.horse.HorseEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, AnimalCartModel> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(AstikorCarts.ID, "textures/entity/animal_cart.png");
 
-    public AnimalCartRenderer(final EntityRendererManager renderManager) {
-        super(renderManager, new AnimalCartModel());
+    public AnimalCartRenderer(final EntityRendererProvider.Context context) {
+        super(context, new AnimalCartModel());
         this.shadowRadius = 1.0F;
     }
 
     @Override
-    public void render(final AnimalCartEntity entity, final float yaw, final float delta, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight) {
+    public void render(final AnimalCartEntity entity, final float yaw, final float delta, final PoseStack stack, final MultiBufferSource source, final int packedLight) {
         super.render(entity, yaw, delta, stack, source, packedLight);
         /*final LivingEntity coachman = entity.getControllingPassenger();
         final Entity pulling = entity.getPulling();
@@ -53,12 +49,12 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
         }*/
     }
 
-    private void horseTransform(final Mat4f m, final HorseEntity entity, final float delta) {
-        final HorseModel<HorseEntity> horseModel = ((HorseRenderer) this.entityRenderDispatcher.getRenderer(entity)).getModel();
+    private void horseTransform(final Mat4f m, final Horse entity, final float delta) {
+        final HorseModel<Horse> horseModel = ((HorseRenderer) this.entityRenderDispatcher.getRenderer(entity)).getModel();
         float strength = 0.0F;
         float swing = 0.0F;
         if (!entity.isPassenger() && entity.isAlive()) {
-            strength = MathHelper.lerp(delta, entity.animationSpeedOld, entity.animationSpeed);
+            strength = Mth.lerp(delta, entity.animationSpeedOld, entity.animationSpeed);
             swing = entity.animationPosition - entity.animationSpeed * (1.0F - delta);
             if (entity.isBaby()) {
                 swing *= 3.0F;
@@ -68,7 +64,7 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
             }
         }
         horseModel.prepareMobModel(entity, swing, strength, delta);
-        final ModelRenderer head = ObfuscationReflectionHelper.getPrivateValue(HorseModel.class, horseModel, "headParts");
+        final ModelPart head = ObfuscationReflectionHelper.getPrivateValue(HorseModel.class, horseModel, "headParts");
         final Mat4f tmp = new Mat4f();
         m.mul(tmp.makeScale(-1.0F, -1.0F, 1.0F));
         m.mul(tmp.makeScale(1.1F, 1.1F, 1.1F));
@@ -76,7 +72,7 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
         this.transform(m, head);
     }
 
-    private void transform(final Mat4f m, final ModelRenderer bone) {
+    private void transform(final Mat4f m, final ModelPart bone) {
         final Mat4f tmp = new Mat4f();
         m.mul(tmp.makeTranslation(bone.x / 16.0F, bone.y / 16.0F, bone.z / 16.0F));
         if (bone.zRot != 0.0F) {
@@ -93,9 +89,9 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
     private Mat4f modelView(final Entity entity, final float delta) {
         final Mat4f m = new Mat4f();
         m.makeTranslation(
-            (float) MathHelper.lerp(delta, entity.xOld, entity.getX()),
-            (float) MathHelper.lerp(delta, entity.yOld, entity.getY()),
-            (float) MathHelper.lerp(delta, entity.zOld, entity.getZ()));
+            (float) Mth.lerp(delta, entity.xOld, entity.getX()),
+            (float) Mth.lerp(delta, entity.yOld, entity.getY()),
+            (float) Mth.lerp(delta, entity.zOld, entity.getZ()));
         final Mat4f r = new Mat4f();
         final float prevYaw, yaw;
         if (entity instanceof LivingEntity) {
@@ -103,9 +99,9 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
             yaw = ((LivingEntity) entity).yBodyRot;
         } else {
             prevYaw = entity.yRotO;
-            yaw = entity.yRot;
+            yaw = entity.getYRot();
         }
-        r.makeRotation((float) Math.toRadians(180.0F - MathHelper.rotLerp(delta, prevYaw, yaw)), 0.0F, 1.0F, 0.0F);
+        r.makeRotation((float) Math.toRadians(180.0F - Mth.rotLerp(delta, prevYaw, yaw)), 0.0F, 1.0F, 0.0F);
         m.mul(r);
         return m;
     }
@@ -119,10 +115,9 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
     }
 
     private void renderLead(final double x, final double y, final double z, final double dx, final double dy, final double dz, final int offset) {
-        final Tessellator tes = Tessellator.getInstance();
+        final Tesselator tes = Tesselator.getInstance();
         final BufferBuilder buf = tes.getBuilder();
         RenderSystem.disableTexture();
-        RenderSystem.disableLighting();
         RenderSystem.disableCull();
         final int n = 24;
         final double w = 0.025D * 2;
@@ -132,7 +127,7 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
         final float r0 = 97.0F / 255.0F;
         final float g0 = 58.0F / 255.0F;
         final float b0 = 29.0F / 255.0F;
-        buf.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+        buf.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
         for (int i = 0; i <= n; i++) {
             float r = r0;
             float g = g0;
@@ -147,7 +142,7 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
             buf.vertex(x + dx * t, y + dy * (t * t + t) * 0.5D + w, z + dz * t).color(r, g, b, 1.0F).endVertex();
         }
         tes.end();
-        buf.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+        buf.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
         for (int i = 0; i <= n; i++) {
             float r = r0;
             float g = g0;
@@ -162,7 +157,6 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
             buf.vertex(x + dx * t + w * nz, y + dy * (t * t + t) * 0.5D, z + dz * t + w * -nx).color(r, g, b, 1.0F).endVertex();
         }
         tes.end();
-        RenderSystem.enableLighting();
         RenderSystem.enableTexture();
         RenderSystem.enableCull();
     }

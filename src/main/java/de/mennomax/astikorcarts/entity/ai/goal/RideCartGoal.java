@@ -1,12 +1,10 @@
 package de.mennomax.astikorcarts.entity.ai.goal;
 
 import de.mennomax.astikorcarts.entity.AbstractDrawnEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
-
-import net.minecraft.entity.ai.goal.Goal.Flag;
 
 public final class RideCartGoal extends Goal {
     private final Entity mob;

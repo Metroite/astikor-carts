@@ -1,12 +1,12 @@
 package de.mennomax.astikorcarts.util;
 
 import de.mennomax.astikorcarts.entity.AbstractDrawnEntity;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.particles.BlockParticleData;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 
 public final class CartWheel {
     private float rotation;
@@ -37,9 +37,9 @@ public final class CartWheel {
         this.rotation += this.rotationIncrement;
         this.prevPosX = this.posX;
         this.prevPosZ = this.posZ;
-        final float yaw = (float) Math.toRadians(this.cart.yRot);
-        final float nx = -MathHelper.sin(yaw);
-        final float nz = MathHelper.cos(yaw);
+        final float yaw = (float) Math.toRadians(this.cart.getYRot());
+        final float nx = -Mth.sin(yaw);
+        final float nz = Mth.cos(yaw);
         this.posX = this.cart.getX() + nx * this.offsetZ - nz * this.offsetX;
         this.posZ = this.cart.getZ() + nz * this.offsetZ + nx * this.offsetX;
         final double dx = this.posX - this.prevPosX;
@@ -47,13 +47,13 @@ public final class CartWheel {
         final float distanceTravelled = (float) Math.sqrt(dx * dx + dz * dz);
         final double dxNormalized = dx / distanceTravelled;
         final double dzNormalized = dz / distanceTravelled;
-        final float travelledForward = MathHelper.sign(dxNormalized * nx + dzNormalized * nz);
+        final float travelledForward = Mth.sign(dxNormalized * nx + dzNormalized * nz);
         if (distanceTravelled > 0.2) {
-            final BlockPos blockpos = new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.cart.getY() - 0.2F), MathHelper.floor(this.posZ));
+            final BlockPos blockpos = new BlockPos(Mth.floor(this.posX), Mth.floor(this.cart.getY() - 0.2F), Mth.floor(this.posZ));
             final BlockState blockstate = this.cart.level.getBlockState(blockpos);
             if (!blockstate.addRunningEffects(this.cart.level, blockpos, this.cart)) {
-                if (blockstate.getRenderShape() != BlockRenderType.INVISIBLE) {
-                    this.cart.level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, blockstate).setPos(blockpos), this.posX, this.cart.getY(), this.posZ, dx, distanceTravelled, dz);
+                if (blockstate.getRenderShape() != RenderShape.INVISIBLE) {
+                    this.cart.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, blockstate).setPos(blockpos), this.posX, this.cart.getY(), this.posZ, dx, distanceTravelled, dz);
                 }
             }
         }

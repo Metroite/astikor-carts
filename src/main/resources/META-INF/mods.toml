@@ -1,10 +1,10 @@
 modLoader="javafml"
-loaderVersion="[34,)"
+loaderVersion="[37,)"
 issueTrackerURL="https://github.com/Metroite/astikor-carts/issues"
 license="MIT"
 [[mods]]
 modId="astikorcarts"
-version="1.1.2"
+version="1.2.0"
 displayName="AstikorCarts"
 displayURL="https://www.curseforge.com/minecraft/mc-mods/astikorcarts"
 # A file name (in the root of the mod JAR) containing a logo for display
@@ -15,13 +15,13 @@ description="This mod adds carts that can be pulled by other entities to the gam
 [[dependencies.astikorcarts]]
     modId = "forge"
     mandatory=true
-    versionRange="[34,)"
+    versionRange="[37,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.astikorcarts]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.3,1.17)"
+    versionRange="[1.17.1,1.18)"
     ordering="NONE"
     side="BOTH"

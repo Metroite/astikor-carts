@@ -3,7 +3,7 @@ package de.mennomax.astikorcarts.world;
 import de.mennomax.astikorcarts.entity.AbstractDrawnEntity;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;

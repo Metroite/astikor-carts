@@ -1,46 +1,41 @@
 package de.mennomax.astikorcarts.client.renderer.entity;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 import de.mennomax.astikorcarts.AstikorCarts;
 import de.mennomax.astikorcarts.client.renderer.entity.model.SupplyCartModel;
 import de.mennomax.astikorcarts.entity.SupplyCartEntity;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockModelRenderer;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.SkeletonModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.entity.model.BipedModel;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ModelRenderer;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.PaintingSpriteUploader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.PaintingType;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.DyeableArmorItem;
-import net.minecraft.item.IDyeableArmorItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.DoubleBlockHalf;
+import net.minecraft.client.resources.PaintingTextureManager;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Matrix3f;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.Motive;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -54,13 +49,13 @@ import java.util.stream.StreamSupport;
 public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, SupplyCartModel> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(AstikorCarts.ID, "textures/entity/supply_cart.png");
 
-    public SupplyCartRenderer(final EntityRendererManager renderManager) {
-        super(renderManager, new SupplyCartModel());
+    public SupplyCartRenderer(final EntityRendererProvider.Context context) {
+        super(context, new SupplyCartModel());
         this.shadowRadius = 1.0F;
     }
 
     @Override
-    protected void renderContents(final SupplyCartEntity entity, final float delta, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight) {
+    protected void renderContents(final SupplyCartEntity entity, final float delta, final PoseStack stack, final MultiBufferSource source, final int packedLight) {
         super.renderContents(entity, delta, stack, source, packedLight);
         final NonNullList<ItemStack> cargo = entity.getCargo();
         Contents contents = Contents.SUPPLIES;
@@ -87,17 +82,17 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         stack.popPose();
     }
 
-    private void renderFlowers(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
+    private void renderFlowers(final SupplyCartEntity entity, final PoseStack stack, final MultiBufferSource source, final int packedLight, final NonNullList<ItemStack> cargo) {
         this.model.getFlowerBasket().render(stack, source.getBuffer(this.model.renderType(this.getTextureLocation(entity))), packedLight, OverlayTexture.NO_OVERLAY);
-        final BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
-        final BlockModelRenderer renderer = dispatcher.getModelRenderer();
+        final BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+        final ModelBlockRenderer renderer = dispatcher.getModelRenderer();
         for (int i = 0; i < cargo.size(); i++) {
             final ItemStack itemStack = cargo.get(i);
             if (!(itemStack.getItem() instanceof BlockItem)) continue;
             final int ix = i % 2, iz = i / 2;
             final BlockState defaultState = ((BlockItem) itemStack.getItem()).getBlock().defaultBlockState();
             final BlockState state = defaultState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) ? defaultState.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER) : defaultState;
-            final IBakedModel model = dispatcher.getBlockModel(state);
+            final BakedModel model = dispatcher.getBlockModel(state);
             final int rgb = Minecraft.getInstance().getBlockColors().getColor(state, null, null, 0);
             final float r = (float) (rgb >> 16 & 255) / 255.0F;
             final float g = (float) (rgb >> 8 & 255) / 255.0F;
@@ -112,17 +107,17 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         }
     }
 
-    private void renderWheel(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
+    private void renderWheel(final SupplyCartEntity entity, final PoseStack stack, final MultiBufferSource source, final int packedLight, final NonNullList<ItemStack> cargo) {
         stack.translate(1.18D, 0.1D, -0.15D);
-        final ModelRenderer wheel = this.model.getWheel();
+        final ModelPart wheel = this.model.getWheel();
         wheel.xRot = 0.9F;
         wheel.zRot = (float) Math.PI * 0.3F;
         wheel.render(stack, source.getBuffer(this.model.renderType(this.getTextureLocation(entity))), packedLight, OverlayTexture.NO_OVERLAY);
     }
 
-    private void renderPaintings(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
-        final IVertexBuilder buf = source.getBuffer(RenderType.entitySolid(Minecraft.getInstance().getPaintingTextures().getBackSprite().atlas().location()));
-        final ObjectList<PaintingType> types = StreamSupport.stream(ForgeRegistries.PAINTING_TYPES.spliterator(), false)
+    private void renderPaintings(final SupplyCartEntity entity, final PoseStack stack, final MultiBufferSource source, final int packedLight, final NonNullList<ItemStack> cargo) {
+        final VertexConsumer buf = source.getBuffer(RenderType.entitySolid(Minecraft.getInstance().getPaintingTextures().getBackSprite().atlas().location()));
+        final ObjectList<Motive> types = StreamSupport.stream(ForgeRegistries.PAINTING_TYPES.spliterator(), false)
             .filter(t -> t.getWidth() == 16 && t.getHeight() == 16)
             .collect(Collectors.toCollection(ObjectArrayList::new));
         final Random rng = new Random(entity.getUUID().getMostSignificantBits() ^ entity.getUUID().getLeastSignificantBits());
@@ -137,7 +132,7 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         for (int i = 0, n = 0; i < cargo.size(); i++) {
             final ItemStack itemStack = cargo.get(i);
             if (itemStack.isEmpty()) continue;
-            final PaintingType t = types.get(i % types.size());
+            final Motive t = types.get(i % types.size());
             stack.pushPose();
             stack.translate(0.0D, (n++ - (count - 1) * 0.5D) / count, -1.0D / 16.0D * i);
             stack.mulPose(Vector3f.ZP.rotation(rng.nextFloat() * (float) Math.PI));
@@ -146,20 +141,20 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         }
     }
 
-    private final BipedModel<LivingEntity> leggings = new BipedModel<>(0.5F), armor = new BipedModel<>(1.0F);
+    private final HumanoidModel<LivingEntity> leggings = new HumanoidModel<>(SkeletonModel.createBodyLayer().bakeRoot()), armor = new HumanoidModel<>(SkeletonModel.createBodyLayer().bakeRoot());
 
-    private void renderSupplies(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
+    private void renderSupplies(final SupplyCartEntity entity, final PoseStack stack, final MultiBufferSource source, final int packedLight, final NonNullList<ItemStack> cargo) {
         final ItemRenderer renderer = Minecraft.getInstance().getItemRenderer();
         final Random rng = new Random();
         for (int i = 0; i < cargo.size(); i++) {
             final ItemStack itemStack = cargo.get(i);
             if (itemStack.isEmpty()) continue;
             final int ix = i % 2, iz = i / 2;
-            if (i < cargo.size() - 2 && cargo.get(i + 2).getItem().is(ItemTags.BEDS)) continue;
-            if (i >= 2 && cargo.get(i - 2).getItem().is(ItemTags.BEDS)) continue;
+            if (i < cargo.size() - 2 && cargo.get(i + 2).is(ItemTags.BEDS)) continue;
+            if (i >= 2 && cargo.get(i - 2).is(ItemTags.BEDS)) continue;
             final double x = (ix - 0.5D) * 11.0D / 16.0D;
             final double z = (iz * 11.0D - 9.0D) / 16.0D;
-            final IBakedModel model = renderer.getModel(itemStack, entity.level, null);
+            final BakedModel model = renderer.getModel(itemStack, entity.level, null, 0); //random 0 value
             stack.pushPose();
             if (model.isGui3d() && itemStack.getItem() != Items.TRIDENT) {
                 stack.translate(x, -0.46D, z);
@@ -170,12 +165,12 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
                     stack.mulPose(Vector3f.YP.rotationDegrees(ix == 0 ? -90.0F : 90.0F));
                     stack.translate(0.5D, 0.8D, -0.05D);
                     stack.mulPose(Vector3f.XP.rotationDegrees(-22.5F));
-                } else if (iz < 1 && itemStack.getItem().is(ItemTags.BEDS)) {
+                } else if (iz < 1 && itemStack.is(ItemTags.BEDS)) {
                     stack.translate(0.0D, 0.0D, 1.0D);
                 } else if (!model.isCustomRenderer()) {
                     stack.mulPose(Vector3f.YP.rotationDegrees(180.0F));
                 }
-                renderer.render(itemStack, ItemCameraTransforms.TransformType.NONE, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
+                renderer.render(itemStack, ItemTransforms.TransformType.NONE, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
             } else {
                 rng.setSeed(32L * i + Objects.hashCode(itemStack.getItem().getRegistryName()));
                 stack.translate(x, -0.15D + ((ix + iz) % 2 == 0 ? 0.0D : 1.0e-4D), z);
@@ -186,12 +181,12 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
                     stack.mulPose(Vector3f.YP.rotation(rng.nextFloat() * (float) Math.PI));
                     stack.mulPose(Vector3f.XP.rotationDegrees(-90.0F));
                     final int copies = Math.min(itemStack.getCount(), (itemStack.getCount() - 1) / 16 + 2);
-                    renderer.render(itemStack, ItemCameraTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
+                    renderer.render(itemStack, ItemTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
                     for (int n = 1; n < copies; n++) {
                         stack.pushPose();
                         stack.mulPose(Vector3f.ZP.rotation(rng.nextFloat() * (float) Math.PI));
                         stack.translate((rng.nextFloat() * 2.0F - 1.0F) * 0.05F, (rng.nextFloat() * 2.0F - 1.0F) * 0.05F, -0.1D * n);
-                        renderer.render(itemStack, ItemCameraTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
+                        renderer.render(itemStack, ItemTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
                         stack.popPose();
                     }
                 }
@@ -200,12 +195,12 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         }
     }
 
-    private void renderArmor(final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final ItemStack itemStack, final int ix) {
+    private void renderArmor(final PoseStack stack, final MultiBufferSource source, final int packedLight, final ItemStack itemStack, final int ix) {
         final Item item = itemStack.getItem();
         if (!(item instanceof ArmorItem)) return;
         final ArmorItem armor = (ArmorItem) item;
-        final EquipmentSlotType slot = armor.getSlot();
-        final BipedModel<LivingEntity> m = slot == EquipmentSlotType.LEGS ? this.leggings : this.armor;
+        final EquipmentSlot slot = armor.getSlot();
+        final HumanoidModel<LivingEntity> m = slot == EquipmentSlot.LEGS ? this.leggings : this.armor;
         stack.mulPose(Vector3f.YP.rotation(ix == 0 ? (float) Math.PI * 0.5F : (float) -Math.PI * 0.5F));
         m.setAllVisible(false);
         m.crouching = false;
@@ -251,24 +246,24 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         }
         stack.scale(0.75F, 0.75F, 0.75F);
         final ResourceLocation tex = new ResourceLocation(armor.getMaterial().getName());
-        final IVertexBuilder armorBuf = ItemRenderer.getArmorFoilBuffer(source,
+        final VertexConsumer armorBuf = ItemRenderer.getArmorFoilBuffer(source,
             RenderType.armorCutoutNoCull(new ResourceLocation(
                 tex.getNamespace(),
-                String.format("textures/models/armor/%s_layer_%d.png", tex.getPath(), slot == EquipmentSlotType.LEGS ? 2 : 1)
+                String.format("textures/models/armor/%s_layer_%d.png", tex.getPath(), slot == EquipmentSlot.LEGS ? 2 : 1)
             )),
             false,
             itemStack.hasFoil()
         );
-        if (armor instanceof IDyeableArmorItem) {
-            final int rgb = ((IDyeableArmorItem) armor).getColor(itemStack);
+        if (armor instanceof DyeableLeatherItem) {
+            final int rgb = ((DyeableLeatherItem) armor).getColor(itemStack);
             final float r = (float) (rgb >> 16 & 255) / 255.0F;
             final float g = (float) (rgb >> 8 & 255) / 255.0F;
             final float b = (float) (rgb & 255) / 255.0F;
             m.renderToBuffer(stack, armorBuf, packedLight, OverlayTexture.NO_OVERLAY, r, g, b, 1.0F);
-            final IVertexBuilder overlayBuf = ItemRenderer.getArmorFoilBuffer(source,
+            final VertexConsumer overlayBuf = ItemRenderer.getArmorFoilBuffer(source,
                 RenderType.armorCutoutNoCull(new ResourceLocation(
                     tex.getNamespace(),
-                    String.format("textures/models/armor/%s_layer_%d_overlay.png", tex.getPath(), slot == EquipmentSlotType.LEGS ? 2 : 1)
+                    String.format("textures/models/armor/%s_layer_%d_overlay.png", tex.getPath(), slot == EquipmentSlot.LEGS ? 2 : 1)
                 )),
                 false,
                 itemStack.hasFoil()
@@ -279,8 +274,8 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         }
     }
 
-    private void renderPainting(final PaintingType painting, final MatrixStack stack, final IVertexBuilder buf, final int packedLight) {
-        final PaintingSpriteUploader uploader = Minecraft.getInstance().getPaintingTextures();
+    private void renderPainting(final Motive painting, final PoseStack stack, final VertexConsumer buf, final int packedLight) {
+        final PaintingTextureManager uploader = Minecraft.getInstance().getPaintingTextures();
         final int width = painting.getWidth();
         final int height = painting.getHeight();
         final TextureAtlasSprite art = uploader.get(painting);
@@ -338,7 +333,7 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         }
     }
 
-    private void vert(final Matrix4f stack, final Matrix3f normal, final IVertexBuilder buf, final float x, final float y, final float u, final float v, final float z, final int nx, final int ny, final int nz, final int packedLight) {
+    private void vert(final Matrix4f stack, final Matrix3f normal, final VertexConsumer buf, final float x, final float y, final float u, final float v, final float z, final int nx, final int ny, final int nz, final int packedLight) {
         buf.vertex(stack, x, y, z).color(0xFF, 0xFF, 0xFF, 0xFF).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, nx, ny, nz).endVertex();
     }
 
@@ -348,7 +343,7 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
     }
 
     private enum Contents {
-        FLOWERS(s -> s.getItem() instanceof BlockItem && s.getItem().is(ItemTags.FLOWERS), SupplyCartRenderer::renderFlowers),
+        FLOWERS(s -> s.getItem() instanceof BlockItem && s.is(ItemTags.FLOWERS), SupplyCartRenderer::renderFlowers),
         PAINTINGS(s -> s.getItem() == Items.PAINTING, SupplyCartRenderer::renderPaintings),
         WHEEL(s -> AstikorCarts.Items.WHEEL.test(s.getItem()), SupplyCartRenderer::renderWheel),
         SUPPLIES(s -> true, SupplyCartRenderer::renderSupplies);
@@ -364,6 +359,6 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
 
     @FunctionalInterface
     private interface ContentsRenderer {
-        void render(final SupplyCartRenderer renderer, final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo);
+        void render(final SupplyCartRenderer renderer, final SupplyCartEntity entity, final PoseStack stack, final MultiBufferSource source, final int packedLight, final NonNullList<ItemStack> cargo);
     }
 }

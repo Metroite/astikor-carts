@@ -17,25 +17,27 @@ import de.mennomax.astikorcarts.network.serverbound.OpenSupplyCartMessage;
 import de.mennomax.astikorcarts.network.serverbound.ToggleSlowMessage;
 import de.mennomax.astikorcarts.world.AstikorWorld;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.client.gui.screen.inventory.InventoryScreen;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fmlclient.registry.ClientRegistry;
 import org.lwjgl.glfw.GLFW;
 
-import de.mennomax.astikorcarts.Initializer.Context;
-
+@Mod.EventBusSubscriber(modid = AstikorCarts.ID, bus = Mod.EventBusSubscriber.Bus.MOD , value = Dist.CLIENT)
 public final class ClientInitializer extends CommonInitializer {
-    private final KeyBinding action = new KeyBinding("key.astikorcarts.desc", GLFW.GLFW_KEY_R, "key.categories.astikorcarts");
+    private final KeyMapping action = new KeyMapping("key.astikorcarts.desc", GLFW.GLFW_KEY_R, "key.categories.astikorcarts");
 
     @Override
     public void init(final Context mod) {
@@ -44,7 +46,7 @@ public final class ClientInitializer extends CommonInitializer {
         mod.bus().<TickEvent.ClientTickEvent>addListener(e -> {
             if (e.phase == TickEvent.Phase.END) {
                 final Minecraft mc = Minecraft.getInstance();
-                final World world = mc.level;
+                final Level world = mc.level;
                 if (world != null) {
                     while (this.action.consumeClick()) {
                         AstikorCarts.CHANNEL.sendToServer(new ActionKeyMessage());
@@ -57,20 +59,20 @@ public final class ClientInitializer extends CommonInitializer {
         });
         mod.bus().<InputEvent.KeyInputEvent>addListener(e -> {
             final Minecraft mc = Minecraft.getInstance();
-            final PlayerEntity player = mc.player;
+            final Player player = mc.player;
             if (player != null) {
                 if (ToggleSlowMessage.getCart(player).isPresent()) {
-                    final KeyBinding binding = mc.options.keySprint;
+                    final KeyMapping binding = mc.options.keySprint;
                     while (binding.consumeClick()) {
                         AstikorCarts.CHANNEL.sendToServer(new ToggleSlowMessage());
-                        KeyBinding.set(binding.getKey(), false);
+                        KeyMapping.set(binding.getKey(), false);
                     }
                 }
             }
         });
         mod.bus().<GuiOpenEvent>addListener(e -> {
             if (e.getGui() instanceof InventoryScreen) {
-                final ClientPlayerEntity player = Minecraft.getInstance().player;
+                final LocalPlayer player = Minecraft.getInstance().player;
                 if (player != null && player.getVehicle() instanceof SupplyCartEntity) {
                     e.setCanceled(true);
                     AstikorCarts.CHANNEL.sendToServer(new OpenSupplyCartMessage());
@@ -78,11 +80,7 @@ public final class ClientInitializer extends CommonInitializer {
             }
         });
         mod.modBus().<FMLClientSetupEvent>addListener(e -> {
-            RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.SUPPLY_CART.get(), SupplyCartRenderer::new);
-            RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.PLOW.get(), PlowRenderer::new);
-            RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.ANIMAL_CART.get(), AnimalCartRenderer::new);
-            RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.POSTILION.get(), PostilionRenderer::new);
-            ScreenManager.register(AstikorCarts.ContainerTypes.PLOW_CART.get(), PlowScreen::new);
+            MenuScreens.register(AstikorCarts.ContainerTypes.PLOW_CART.get(), PlowScreen::new);
             ClientRegistry.registerKeyBinding(this.action);
         });
         new AssembledTextureFactory()
@@ -150,5 +148,13 @@ public final class ClientInitializer extends CommonInitializer {
                 )
             )
             .register(mod.modBus());
+    }
+
+    @SubscribeEvent
+    public static void registerRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(AstikorCarts.EntityTypes.SUPPLY_CART.get(), SupplyCartRenderer::new);
+        event.registerEntityRenderer(AstikorCarts.EntityTypes.PLOW.get(), PlowRenderer::new);
+        event.registerEntityRenderer(AstikorCarts.EntityTypes.ANIMAL_CART.get(), AnimalCartRenderer::new);
+        event.registerEntityRenderer(AstikorCarts.EntityTypes.POSTILION.get(), PostilionRenderer::new);
     }
 }

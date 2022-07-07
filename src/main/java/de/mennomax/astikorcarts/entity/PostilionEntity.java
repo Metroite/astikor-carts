@@ -1,21 +1,18 @@
 package de.mennomax.astikorcarts.entity;
 
 import de.mennomax.astikorcarts.world.AstikorWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.attributes.AttributeModifierMap;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.network.IPacket;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
 
 public final class PostilionEntity extends DummyLivingEntity {
-    public PostilionEntity(final EntityType<? extends PostilionEntity> type, final World world) {
+    public PostilionEntity(final EntityType<? extends PostilionEntity> type, final Level world) {
         super(type, world);
     }
 
@@ -30,13 +27,13 @@ public final class PostilionEntity extends DummyLivingEntity {
         if (!this.level.isClientSide) {
             final LivingEntity coachman = this.getCoachman();
             if (coachman != null) {
-                this.yRot = coachman.yRot;
-                this.yRotO = this.yRot;
-                this.xRot = coachman.xRot * 0.5F;
+                this.setYRot(coachman.getYRot());
+                this.yRotO = this.getYRot();
+                this.setXRot(coachman.getXRot() * 0.5F);
                 this.zza = coachman.zza;
                 this.xxa = 0.0F;
             } else {
-                this.remove();
+                this.remove(RemovalReason.DISCARDED);
             }
         }
     }
@@ -52,7 +49,7 @@ public final class PostilionEntity extends DummyLivingEntity {
     }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

@@ -4,20 +4,20 @@ import cpw.mods.modlauncher.api.INameMappingService;
 import de.mennomax.astikorcarts.AstikorCarts;
 import de.mennomax.astikorcarts.oregon.BasicProgram;
 import de.mennomax.astikorcarts.oregon.Oregon;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.StatsScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.list.AbstractList;
+import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.achievement.StatsScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.stats.Stat;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -58,8 +58,8 @@ public final class OregonSubscriber {
         }
         if (screen instanceof ChatScreen && (event.getKeyCode() == GLFW.GLFW_KEY_ENTER || event.getKeyCode() == GLFW.GLFW_KEY_KP_ENTER)) {
             screen.children().stream()
-                .filter(TextFieldWidget.class::isInstance)
-                .map(TextFieldWidget.class::cast)
+                .filter(EditBox.class::isInstance)
+                .map(EditBox.class::cast)
                 .findFirst().ifPresent(field -> {
                     if (this.state.onChat(field)) {
                         event.setCanceled(true);
@@ -69,7 +69,7 @@ public final class OregonSubscriber {
     }
 
     private Optional<Stat<?>> getSelectedStat(final StatsScreen screen) {
-        final AbstractList<?> list = screen.getActiveList();
+        final AbstractSelectionList<?> list = screen.getActiveList();
         if (list == null) {
             return Optional.empty();
         }
@@ -80,7 +80,7 @@ public final class OregonSubscriber {
             LOGGER.error("Unable to lookup custom stat entry class", e);
             return Optional.empty();
         }
-        final AbstractList.AbstractListEntry<?> entry = list.getSelected();
+        final AbstractSelectionList.Entry<?> entry = list.getSelected();
         if (!classCustomStatsList$Entry.isInstance(entry)) {
             return Optional.empty();
         }
@@ -108,7 +108,7 @@ public final class OregonSubscriber {
 
         abstract void stop();
 
-        abstract boolean onChat(final TextFieldWidget field);
+        abstract boolean onChat(final EditBox field);
     }
 
     static class IdleState extends State {
@@ -121,7 +121,7 @@ public final class OregonSubscriber {
         }
 
         @Override
-        public boolean onChat(final TextFieldWidget field) {
+        public boolean onChat(final EditBox field) {
             return false;
         }
     }
@@ -156,7 +156,7 @@ public final class OregonSubscriber {
         }
 
         @Override
-        public boolean onChat(final TextFieldWidget field) {
+        public boolean onChat(final EditBox field) {
             final String text = field.getValue();
             if (text.startsWith("?")) {
                 this.io.add(text.substring(1).trim());
@@ -172,9 +172,9 @@ public final class OregonSubscriber {
 
         void add(final String s) {
             this.in.addLast(s);
-            final ClientPlayerEntity player = Minecraft.getInstance().player;
+            final LocalPlayer player = Minecraft.getInstance().player;
             if (player != null) {
-                player.sendMessage(new StringTextComponent(s).withStyle(TextFormatting.ITALIC, TextFormatting.WHITE), Util.NIL_UUID);
+                player.sendMessage(new TextComponent(s).withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), Util.NIL_UUID);
             }
         }
 
@@ -196,9 +196,9 @@ public final class OregonSubscriber {
         public void print(final String s) {
             final Minecraft mc = Minecraft.getInstance();
             mc.executeBlocking(() -> {
-                final ClientPlayerEntity player = mc.player;
+                final LocalPlayer player = mc.player;
                 if (player != null) {
-                    player.sendMessage(new StringTextComponent(s).withStyle(TextFormatting.ITALIC, TextFormatting.GRAY), Util.NIL_UUID);
+                    player.sendMessage(new TextComponent(s).withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY), Util.NIL_UUID);
                 }
             });
         }

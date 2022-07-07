@@ -1,57 +1,48 @@
 package de.mennomax.astikorcarts.client.renderer.entity.model;
 
 import de.mennomax.astikorcarts.entity.AnimalCartEntity;
-import net.minecraft.client.renderer.model.ModelRenderer;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public final class AnimalCartModel extends CartModel<AnimalCartEntity> {
-    private final ModelRenderer axis;
-    private final ModelRenderer cartBase;
-    private final ModelRenderer shaft;
-    private final ModelRenderer boardLeft;
-    private final ModelRenderer boardRight;
-    private final ModelRenderer boardBack;
-    private final ModelRenderer boardFront;
+    private final ModelPart cart;
 
     public AnimalCartModel() {
         super(64, 64);
+        MeshDefinition cart = CartModel.createBodyLayer();
+        LayerDefinition animalCart = createBodyLayer(cart);
+        this.cart = animalCart.bakeRoot().getChild("cart");
+    }
 
-        this.axis = new ModelRenderer(this, 0, 21);
-        this.axis.addBox(-12.5F, -1.0F, -1.0F, 25, 2, 2);
+    public static LayerDefinition createBodyLayer(MeshDefinition cart) {
+        PartDefinition root = cart.getRoot();
 
-        this.cartBase = new ModelRenderer(this, 0, 0);
-        this.cartBase.addBox(-15.5F, -10.0F, -2.0F, 29, 20, 1);
-        this.cartBase.xRot = (float) -Math.PI / 2.0F;
-        this.cartBase.yRot = (float) -Math.PI / 2.0F;
+        PartDefinition axis = root.addOrReplaceChild("axis", CubeListBuilder.create().texOffs(0, 21)
+                .addBox(-12.5F, -1.0F, -1.0F, 25, 2, 2), PartPose.offset(0.0F, -11.0F, 1.0F));
 
-        this.shaft = new ModelRenderer(this, 0, 25);
-        this.shaft.setPos(0.0F, -5.0F, -15.0F);
-        this.shaft.yRot = (float) Math.PI / 2.0F;
-        this.shaft.addBox(0.0F, -0.5F, -8.0F, 20, 2, 1);
-        this.shaft.addBox(0.0F, -0.5F, 7.0F, 20, 2, 1);
+        PartDefinition cartBase = axis.addOrReplaceChild("cart_base", CubeListBuilder.create()
+                .addBox(-15.5F, -10.0F, -2.0F, 29, 20, 1), PartPose.rotation(0F, (float) -Math.PI / 2.0F, (float) -Math.PI / 2.0F));
 
-        this.boardLeft = new ModelRenderer(this, 0, 28);
-        this.boardLeft.addBox(-10.0F, -14.5F, 9F, 8, 31, 2);
-        this.boardLeft.xRot = (float) -Math.PI / 2.0F;
-        this.boardLeft.zRot = (float) Math.PI / 2.0F;
+        PartDefinition shaft = cartBase.addOrReplaceChild("shaft", CubeListBuilder.create().texOffs(0, 25)
+                .addBox(0.0F, -0.5F, -8.0F, 20, 2, 1)
+                .addBox(0.0F, -0.5F, 7.0F, 20, 2, 1), PartPose.offsetAndRotation(0.0F, -5.0F, -15.0F, 0F, 0F, (float) Math.PI / 2.0F));
 
-        this.boardRight = new ModelRenderer(this, 0, 28);
-        this.boardRight.addBox(-10.0F, -14.5F, -11F, 8, 31, 2);
-        this.boardRight.xRot = (float) -Math.PI / 2.0F;
-        this.boardRight.zRot = (float) Math.PI / 2.0F;
+        PartDefinition boardLeft = shaft.addOrReplaceChild("boardLeft", CubeListBuilder.create().texOffs(0, 28)
+                .addBox(-10.0F, -14.5F, 9F, 8, 31, 2), PartPose.rotation(0F, (float) -Math.PI / 2.0F, (float) Math.PI / 2.0F));
 
-        this.boardBack = new ModelRenderer(this, 20, 28);
-        this.boardBack.addBox(-9F, -10.0F, 12.5F, 18, 8, 2);
+        PartDefinition boardRight = boardLeft.addOrReplaceChild("board_right", CubeListBuilder.create().texOffs(0, 28)
+                .addBox(-10.0F, -14.5F, -11F, 8, 31, 2), PartPose.rotation(0F, (float) -Math.PI / 2.0F, (float) Math.PI / 2.0F));
 
-        this.boardFront = new ModelRenderer(this, 20, 28);
-        this.boardFront.addBox(-9F, -10.0F, -16.5F, 18, 8, 2);
+        PartDefinition boardBack = boardRight.addOrReplaceChild("board_back", CubeListBuilder.create().texOffs(20, 28)
+                .addBox(-9F, -10.0F, 12.5F, 18, 8, 2), PartPose.ZERO);
 
-        this.body.addChild(this.axis);
-        this.body.addChild(this.cartBase);
-        this.body.addChild(this.shaft);
-        this.body.addChild(this.boardLeft);
-        this.body.addChild(this.boardRight);
-        this.body.addChild(this.boardBack);
-        this.body.addChild(this.boardFront);
-        this.body.setPos(0.0F, -11.0F, 1.0F);
+        PartDefinition boardFront = boardBack.addOrReplaceChild("board_front", CubeListBuilder.create().texOffs(20, 28)
+                .addBox(-9F, -10.0F, -16.5F, 18, 8, 2), PartPose.ZERO);
+
+        return LayerDefinition.create(cart, 128, 64);
     }
 }

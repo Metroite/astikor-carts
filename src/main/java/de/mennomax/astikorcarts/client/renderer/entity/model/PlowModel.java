@@ -1,102 +1,75 @@
 package de.mennomax.astikorcarts.client.renderer.entity.model;
 
 import de.mennomax.astikorcarts.entity.PlowEntity;
-import net.minecraft.client.renderer.model.ModelRenderer;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public final class PlowModel extends CartModel<PlowEntity> {
-    private final ModelRenderer axis;
-    private final ModelRenderer[] triangle = new ModelRenderer[3];
-    private final ModelRenderer shaft;
-    private final ModelRenderer shaftConnector;
-    private final ModelRenderer[] plowShaftUpper = new ModelRenderer[3];
-    private final ModelRenderer[] plowShaftLower = new ModelRenderer[3];
-    private final ModelRenderer plowHandle;
-    private final ModelRenderer plowHandleGrip;
-    private final ModelRenderer parts;
-    private final ModelRenderer shafts;
+    private final ModelPart plow;
 
     public PlowModel() {
         super(64, 64);
-
-        this.axis = new ModelRenderer(this, 0, 0);
-        this.axis.addBox(-12.5F, -1.0F, -1.0F, 25, 2, 2);
-
-        this.triangle[0] = new ModelRenderer(this, 0, 4);
-        this.triangle[0].addBox(-7.5F, -9.0F, 0.0F, 15, 2, 2);
-
-        this.triangle[1] = new ModelRenderer(this, 0, 11);
-        this.triangle[1].addBox(-5.0F, -9.0F, 0.5F, 2, 14, 2);
-        this.triangle[1].zRot = -0.175F;
-
-        this.triangle[2] = new ModelRenderer(this, 0, 11);
-        this.triangle[2].addBox(3.0F, -9.0F, 0.5F, 2, 14, 2);
-        this.triangle[2].zRot = 0.175F;
-        this.triangle[2].mirror = true;
-
-        this.shaft = new ModelRenderer(this, 0, 8);
-        this.shaft.zRot = -0.07F;
-        this.shaft.addBox(0.0F, 0.0F, -8.0F, 20, 2, 1);
-        this.shaft.addBox(0.0F, 0.0F, 7.0F, 20, 2, 1);
-
-        this.shaftConnector = new ModelRenderer(this, 0, 27);
-        this.shaftConnector.zRot = -0.26F;
-        this.shaftConnector.addBox(-16.0F, 0.0F, -8.0F, 16, 2, 1);
-        this.shaftConnector.addBox(-16.0F, 0.0F, 7.0F, 16, 2, 1);
-
-        this.shafts = new ModelRenderer(this);
-        this.shafts.setPos(0.0F, 0.0F, -14.0F);
-        this.shafts.yRot = (float) Math.PI / 2.0F;
-        this.shafts.addChild(this.shaft);
-        this.shafts.addChild(this.shaftConnector);
-
-        for (int i = 0; i < this.plowShaftUpper.length; i++) {
-            this.plowShaftUpper[i] = new ModelRenderer(this, 56, 0);
-            this.plowShaftUpper[i].addBox(-1.0F, -2.0F, -2.0F, 2, 30, 2);
-            this.plowShaftUpper[i].setPos(-3.0F + 3 * i, -7.0F, 0.0F);
-            this.plowShaftUpper[i].yRot = -0.523599F + (float) Math.PI / 6.0F * i;
-
-            this.plowShaftLower[i] = new ModelRenderer(this, 42, 4);
-            this.plowShaftLower[i].addBox(-1.0F, -0.7F, -0.7F, 2, 10, 2);
-            this.plowShaftLower[i].setPos(0.0F, 28.0F, -1.0F);
-            this.plowShaftLower[i].xRot = (float) Math.PI / 4.0F;
-            this.plowShaftUpper[i].addChild(this.plowShaftLower[i]);
-        }
-
-        this.plowHandle = new ModelRenderer(this, 50, 4);
-        this.plowHandle.addBox(-0.5F, 0.0F, -0.5F, 1, 18, 1);
-        this.plowHandle.setPos(0.0F, 33.0F, 5.0F);
-        this.plowHandle.xRot = (float) Math.PI / 2.0F;
-        this.plowShaftUpper[1].addChild(this.plowHandle);
-
-        this.plowHandleGrip = new ModelRenderer(this, 50, 23);
-        this.plowHandleGrip.addBox(-0.5F, 0.0F, -1.0F, 1, 5, 1);
-        this.plowHandleGrip.setPos(0.0F, 32.8F, 21.0F);
-        this.plowHandleGrip.xRot = (float) Math.PI / 4.0F;
-        this.plowShaftUpper[1].addChild(this.plowHandleGrip);
-
-        this.parts = new ModelRenderer(this);
-        this.parts.setPos(0.0F, -5.0F, -1.0F);
-        this.parts.addChild(this.shafts);
-        this.parts.addChild(this.triangle[0]);
-        this.parts.addChild(this.triangle[1]);
-        this.parts.addChild(this.triangle[2]);
-        this.parts.addChild(this.plowShaftUpper[0]);
-        this.parts.addChild(this.plowShaftUpper[1]);
-        this.parts.addChild(this.plowShaftUpper[2]);
-        this.body.addChild(this.axis);
-        this.body.addChild(this.parts);
+        plow = LayerDefinition.create(createBodyLayer(), 64, 64).bakeRoot().getChild("axis");
     }
 
-    public ModelRenderer getShaft(final int original) {
-        return this.plowShaftLower[original];
+    public static MeshDefinition createBodyLayer() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+
+        PartDefinition axis = partdefinition.addOrReplaceChild("axis", CubeListBuilder.create()
+                .addBox(-12.5F, -1.0F, -1.0F, 25, 2, 2), PartPose.ZERO);
+
+        PartDefinition triangle0 = axis.addOrReplaceChild("triangle0", CubeListBuilder.create().texOffs(0, 4)
+                .addBox(-7.5F, -9.0F, 0.0F, 15, 2, 2), PartPose.ZERO);
+
+        PartDefinition triangle1 = axis.addOrReplaceChild("triangle1", CubeListBuilder.create().texOffs(0, 11)
+                .addBox(-5.0F, -9.0F, 0.5F, 2, 14, 2), PartPose.rotation(0F, 0F, -0.175F));
+
+        PartDefinition triangle2 = axis.addOrReplaceChild("triangle2", CubeListBuilder.create().texOffs(0, 11)
+                .addBox(3.0F, -9.0F, 0.5F, 2, 14, 2).mirror(), PartPose.rotation(0F, 0F, 0.175F));
+
+        PartDefinition shaft = axis.addOrReplaceChild("shaft", CubeListBuilder.create().texOffs(0, 8)
+                .addBox(0.0F, 0.0F, -8.0F, 20, 2, 1)
+                .addBox(0.0F, 0.0F, 7.0F, 20, 2, 1), PartPose.rotation(0F, 0F, -0.07F));
+
+        PartDefinition shaftConnector = axis.addOrReplaceChild("shaft_connector", CubeListBuilder.create().texOffs(0, 27)
+                .addBox(-16.0F, 0.0F, -8.0F, 16, 2, 1)
+                .addBox(-16.0F, 0.0F, 7.0F, 16, 2, 1), PartPose.rotation(0F, 0F, -0.26F));
+
+        PartDefinition shafts = shaft.addOrReplaceChild("shafts", CubeListBuilder.create().texOffs(0, 27), PartPose.offsetAndRotation(0.0F, 0.0F, -14.0F, 0F, (float) Math.PI / 2.0F, 0F));
+
+        for (int i = 0; i < 3; i++) {
+            PartDefinition plowShaftLower = shafts.addOrReplaceChild("plow_shaft_lower"+i, CubeListBuilder.create().texOffs(42, 4)
+                    .addBox(-1.0F, -0.7F, -0.7F, 2, 10, 2), PartPose.offsetAndRotation(0.0F, 28.0F, -1.0F, (float) Math.PI / 4.0F, 0F, 0F));
+
+            PartDefinition plowShaftUpper = plowShaftLower.addOrReplaceChild("plow_shaft_upper"+i, CubeListBuilder.create().texOffs(56, 0)
+                    .addBox(-1.0F, -2.0F, -2.0F, 2, 30, 2), PartPose.offsetAndRotation(-3.0F + 3 * i, -7.0F, 0.0F, 0F, -0.523599F + (float) Math.PI / 6.0F * i, 0F));
+        }
+
+        PartDefinition plowHandle = shafts.getChild("plow_shaft_lower1").getChild("plow_shaft_upper1").addOrReplaceChild("plow_handle", CubeListBuilder.create().texOffs(50, 4)
+                .addBox(-0.5F, 0.0F, -0.5F, 1, 18, 1), PartPose.offsetAndRotation(0.0F, 33.0F, 5.0F, (float) Math.PI / 2.0F, 0F, 0F));
+
+        PartDefinition plowHandleGrip = shafts.getChild("plow_shaft_lower1").getChild("plow_shaft_upper1").addOrReplaceChild("plow_handle_grip", CubeListBuilder.create().texOffs(50, 23)
+                .addBox(-0.5F, 0.0F, -1.0F, 1, 5, 1), PartPose.offsetAndRotation(0.0F, 32.8F, 21.0F, (float) Math.PI / 4.0F, 0F, 0F));
+
+        return meshdefinition;
+    }
+
+    public ModelPart getShaft(final int original) {
+        return this.plow.getChild("plow_shaft_lower"+original);
     }
 
 
     @Override
     public void setupAnim(final PlowEntity entity, final float delta, final float limbSwingAmount, final float ageInTicks, final float netHeadYaw, final float pitch) {
         super.setupAnim(entity, delta, limbSwingAmount, ageInTicks, netHeadYaw, pitch);
-        for (final ModelRenderer renderer : this.plowShaftUpper) {
-            renderer.xRot = (float) (entity.getPlowing() ? Math.PI / 4.0D - Math.toRadians(pitch) : Math.PI / 2.5D);
+        for (int i = 0; i < 3; i++) {
+            ModelPart part = this.plow.getChild("plow_shaft_upper"+i);
+            part.xRot = (float) (entity.getPlowing() ? Math.PI / 4.0D - Math.toRadians(pitch) : Math.PI / 2.5D);
         }
     }
 }

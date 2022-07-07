@@ -2,21 +2,21 @@ package de.mennomax.astikorcarts.client.sound;
 
 import de.mennomax.astikorcarts.entity.SupplyCartEntity;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.TickableSound;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.MusicDiscItem;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.RecordItem;
+import net.minecraft.sounds.SoundSource;
 
-public class CartingJukeboxSound extends TickableSound {
+public class CartingJukeboxSound extends AbstractTickableSoundInstance {
     private final SupplyCartEntity cart;
 
-    private final MusicDiscItem disc;
+    private final RecordItem disc;
 
-    public CartingJukeboxSound(final SupplyCartEntity cart, final MusicDiscItem disc) {
-        super(disc.getSound(), SoundCategory.RECORDS);
+    public CartingJukeboxSound(final SupplyCartEntity cart, final RecordItem disc) {
+        super(disc.getSound(), SoundSource.RECORDS);
         this.cart = cart;
         this.disc = disc;
     }
@@ -33,9 +33,9 @@ public class CartingJukeboxSound extends TickableSound {
     }
 
     public static void play(final SupplyCartEntity e, final ItemStack stack) {
-        final MusicDiscItem disc = getDisc(stack);
+        final RecordItem disc = getDisc(stack);
         final Minecraft mc = Minecraft.getInstance();
-        final ClientPlayerEntity player = mc.player;
+        final LocalPlayer player = mc.player;
         if (player == null) return;
         mc.getSoundManager().play(new CartingJukeboxSound(e, disc));
         if (e.distanceToSqr(player) < 64.0D * 64.0D) {
@@ -43,8 +43,8 @@ public class CartingJukeboxSound extends TickableSound {
         }
     }
 
-    public static MusicDiscItem getDisc(final ItemStack stack) {
+    public static RecordItem getDisc(final ItemStack stack) {
         final Item item = stack.getItem();
-        return (MusicDiscItem) (item instanceof MusicDiscItem ? item : Items.MUSIC_DISC_11);
+        return (RecordItem) (item instanceof RecordItem ? item : Items.MUSIC_DISC_11);
     }
 }

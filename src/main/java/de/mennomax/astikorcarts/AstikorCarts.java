@@ -15,15 +15,15 @@ import de.mennomax.astikorcarts.network.clientbound.UpdateDrawnMessage;
 import de.mennomax.astikorcarts.server.ServerInitializer;
 import de.mennomax.astikorcarts.util.DefRegister;
 import de.mennomax.astikorcarts.util.RegObject;
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.entity.EntityType;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.stats.IStatFormatter;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.stats.StatFormatter;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.core.Registry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -31,7 +31,7 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.function.Supplier;
@@ -59,8 +59,8 @@ public final class AstikorCarts {
         public static final RegObject<Item, Item> WHEEL, SUPPLY_CART, PLOW, ANIMAL_CART;
 
         static {
-            WHEEL = R.make("wheel", () -> new Item(new Item.Properties().tab(ItemGroup.TAB_MATERIALS)));
-            final Supplier<Item> cart = () -> new CartItem(new Item.Properties().stacksTo(1).tab(ItemGroup.TAB_TRANSPORTATION));
+            WHEEL = R.make("wheel", () -> new Item(new Item.Properties().tab(CreativeModeTab.TAB_MATERIALS)));
+            final Supplier<Item> cart = () -> new CartItem(new Item.Properties().stacksTo(1).tab(CreativeModeTab.TAB_TRANSPORTATION));
             SUPPLY_CART = R.make("supply_cart", cart);
             PLOW = R.make("plow", cart);
             ANIMAL_CART = R.make("animal_cart", cart);
@@ -79,16 +79,16 @@ public final class AstikorCarts {
         public static final RegObject<EntityType<?>, EntityType<PostilionEntity>> POSTILION;
 
         static {
-            SUPPLY_CART = R.make("supply_cart", () -> EntityType.Builder.of(SupplyCartEntity::new, EntityClassification.MISC)
+            SUPPLY_CART = R.make("supply_cart", () -> EntityType.Builder.of(SupplyCartEntity::new, MobCategory.MISC)
                 .sized(1.5F, 1.4F)
                 .build(ID + ":supply_cart"));
-            PLOW = R.make("plow", () -> EntityType.Builder.of(PlowEntity::new, EntityClassification.MISC)
+            PLOW = R.make("plow", () -> EntityType.Builder.of(PlowEntity::new, MobCategory.MISC)
                 .sized(1.3F, 1.4F)
                 .build(ID + ":plow"));
-            ANIMAL_CART = R.make("animal_cart", () -> EntityType.Builder.of(AnimalCartEntity::new, EntityClassification.MISC)
+            ANIMAL_CART = R.make("animal_cart", () -> EntityType.Builder.of(AnimalCartEntity::new, MobCategory.MISC)
                 .sized(1.3F, 1.4F)
                 .build(ID + ":animal_cart"));
-            POSTILION = R.make("postilion", () -> EntityType.Builder.of(PostilionEntity::new, EntityClassification.MISC)
+            POSTILION = R.make("postilion", () -> EntityType.Builder.of(PostilionEntity::new, MobCategory.MISC)
                 .sized(0.25F, 0.25F)
                 .noSummon()
                 .noSave()
@@ -111,18 +111,18 @@ public final class AstikorCarts {
         private Stats() {
         }
 
-        private static final DefRegister.Vanilla<ResourceLocation, IStatFormatter> R = REG.of(Registry.CUSTOM_STAT, net.minecraft.stats.Stats.CUSTOM::get, rl -> IStatFormatter.DEFAULT);
+        private static final DefRegister.Vanilla<ResourceLocation, StatFormatter> R = REG.of(Registry.CUSTOM_STAT, net.minecraft.stats.Stats.CUSTOM::get, rl -> StatFormatter.DEFAULT);
 
-        public static final ResourceLocation CART_ONE_CM = R.make("cart_one_cm", rl -> rl, rl -> IStatFormatter.DISTANCE);
+        public static final ResourceLocation CART_ONE_CM = R.make("cart_one_cm", rl -> rl, rl -> StatFormatter.DISTANCE);
     }
 
     public static final class ContainerTypes {
         private ContainerTypes() {
         }
 
-        private static final DefRegister.Forge<ContainerType<?>> R = REG.of(ForgeRegistries.CONTAINERS);
+        private static final DefRegister.Forge<MenuType<?>> R = REG.of(ForgeRegistries.CONTAINERS);
 
-        public static final RegObject<ContainerType<?>, ContainerType<PlowContainer>> PLOW_CART = R.make("plow", () -> IForgeContainerType.create(PlowContainer::new));
+        public static final RegObject<MenuType<?>, MenuType<PlowContainer>> PLOW_CART = R.make("plow", () -> IForgeContainerType.create(PlowContainer::new));
     }
 
     public AstikorCarts() {
