@@ -50,10 +50,10 @@ import java.util.Iterator;
 
 public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
     private static final ImmutableList<DataParameter<ItemStack>> CARGO = ImmutableList.of(
-        EntityDataManager.createKey(SupplyCartEntity.class, DataSerializers.ITEMSTACK),
-        EntityDataManager.createKey(SupplyCartEntity.class, DataSerializers.ITEMSTACK),
-        EntityDataManager.createKey(SupplyCartEntity.class, DataSerializers.ITEMSTACK),
-        EntityDataManager.createKey(SupplyCartEntity.class, DataSerializers.ITEMSTACK));
+        EntityDataManager.defineId(SupplyCartEntity.class, DataSerializers.ITEM_STACK),
+        EntityDataManager.defineId(SupplyCartEntity.class, DataSerializers.ITEM_STACK),
+        EntityDataManager.defineId(SupplyCartEntity.class, DataSerializers.ITEM_STACK),
+        EntityDataManager.defineId(SupplyCartEntity.class, DataSerializers.ITEM_STACK));
 
     public SupplyCartEntity(final EntityType<? extends Entity> type, final World world) {
         super(type, world);
@@ -101,31 +101,31 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
                     }
                 }
                 for (int i = 0; i < CARGO.size(); i++) {
-                    this.cart.getDataManager().set(CARGO.get(i), items[i]);
+                    this.cart.getEntityData().set(CARGO.get(i), items[i]);
                 }
             }
         };
     }
 
     @Override
-    public ActionResultType processInitialInteract(final PlayerEntity player, final Hand hand) {
+    public ActionResultType interact(final PlayerEntity player, final Hand hand) {
         if (player.isSecondaryUseActive()) {
             this.openContainer(player);
-            return ActionResultType.func_233537_a_(this.world.isRemote);
+            return ActionResultType.sidedSuccess(this.level.isClientSide);
         }
-        final ItemStack held = player.getHeldItem(hand);
+        final ItemStack held = player.getItemInHand(hand);
         if (this.hasJukebox()) {
-            if (this.world.isRemote) return ActionResultType.SUCCESS;
+            if (this.level.isClientSide) return ActionResultType.SUCCESS;
             if (held.getItem() instanceof MusicDiscItem && this.insertDisc(player, held) || this.ejectDisc(player)) {
                 return ActionResultType.CONSUME;
             } else {
                 return ActionResultType.FAIL;
             }
         }
-        if (this.isBeingRidden()) {
+        if (this.isVehicle()) {
             return ActionResultType.PASS;
         }
-        if (!this.world.isRemote) {
+        if (!this.level.isClientSide) {
             return player.startRiding(this) ? ActionResultType.CONSUME : ActionResultType.PASS;
         }
         return ActionResultType.SUCCESS;
@@ -136,9 +136,9 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
             final ItemStack stack = this.inventory.getStackInSlot(i);
             if (DiscTag.insert(stack, held)) {
                 this.inventory.setStackInSlot(i, stack);
-                ((ServerWorld) this.world).getChunkProvider().sendToAllTracking(this, new SEntityMetadataPacket(this.getEntityId(), this.dataManager, false));
-                this.world.setEntityState(this, (byte) 5);
-                if (!player.abilities.isCreativeMode) held.shrink(1);
+                ((ServerWorld) this.level).getChunkSource().broadcast(this, new SEntityMetadataPacket(this.getId(), this.entityData, false));
+                this.level.broadcastEntityEvent(this, (byte) 5);
+                if (!player.abilities.instabuild) held.shrink(1);
                 return true;
             }
         }
@@ -159,7 +159,7 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
 
     public boolean hasJukebox() {
         for (final DataParameter<ItemStack> slot : CARGO) {
-            final ItemStack cargo = this.dataManager.get(slot);
+            final ItemStack cargo = this.entityData.get(slot);
             if (cargo.getItem() == Items.JUKEBOX) return true;
         }
         return false;
@@ -167,7 +167,7 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
 
     public ItemStack getDisc() {
         for (final DataParameter<ItemStack> slot : CARGO) {
-            final ItemStack disc = DiscTag.get(this.dataManager.get(slot)).disc;
+            final ItemStack disc = DiscTag.get(this.entityData.get(slot)).disc;
             if (!disc.isEmpty()) return disc;
         }
         return ItemStack.EMPTY;
@@ -175,45 +175,45 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    public void handleStatusUpdate(final byte id) {
+    public void handleEntityEvent(final byte id) {
         if (id == 5) {
             for (final DataParameter<ItemStack> slot : CARGO) {
-                final ItemStack disc = DiscTag.get(this.dataManager.get(slot)).disc;
+                final ItemStack disc = DiscTag.get(this.entityData.get(slot)).disc;
                 if (!disc.isEmpty()) {
                     CartingJukeboxSound.play(this, disc);
                     break;
                 }
             }
         } else {
-            super.handleStatusUpdate(id);
+            super.handleEntityEvent(id);
         }
     }
 
     @Override
-    public double getMountedYOffset() {
+    public double getPassengersRidingOffset() {
         return 11.0D / 16.0D;
     }
 
     @Override
-    public void updatePassenger(final Entity passenger) {
-        if (this.isPassenger(passenger)) {
-            final Vector3d forward = this.getLookVec();
-            final Vector3d origin = new Vector3d(0.0D, this.getMountedYOffset(), 1.0D / 16.0D);
+    public void positionRider(final Entity passenger) {
+        if (this.hasPassenger(passenger)) {
+            final Vector3d forward = this.getLookAngle();
+            final Vector3d origin = new Vector3d(0.0D, this.getPassengersRidingOffset(), 1.0D / 16.0D);
             final Vector3d pos = origin.add(forward.scale(-0.68D));
-            passenger.setPosition(this.getPosX() + pos.x, this.getPosY() + pos.y - 0.1D + passenger.getYOffset(), this.getPosZ() + pos.z);
-            passenger.setRenderYawOffset(this.rotationYaw + 180.0F);
-            final float f2 = MathHelper.wrapDegrees(passenger.rotationYaw - this.rotationYaw + 180.0F);
+            passenger.setPos(this.getX() + pos.x, this.getY() + pos.y - 0.1D + passenger.getMyRidingOffset(), this.getZ() + pos.z);
+            passenger.setYBodyRot(this.yRot + 180.0F);
+            final float f2 = MathHelper.wrapDegrees(passenger.yRot - this.yRot + 180.0F);
             final float f1 = MathHelper.clamp(f2, -105.0F, 105.0F);
-            passenger.prevRotationYaw += f1 - f2;
-            passenger.rotationYaw += f1 - f2;
-            passenger.setRotationYawHead(passenger.rotationYaw);
+            passenger.yRotO += f1 - f2;
+            passenger.yRot += f1 - f2;
+            passenger.setYHeadRot(passenger.yRot);
         }
     }
 
     public NonNullList<ItemStack> getCargo() {
         final NonNullList<ItemStack> cargo = NonNullList.withSize(CARGO.size(), ItemStack.EMPTY);
         for (int i = 0; i < CARGO.size(); i++) {
-            cargo.set(i, this.dataManager.get(CARGO.get(i)));
+            cargo.set(i, this.entityData.get(CARGO.get(i)));
         }
         return cargo;
     }
@@ -224,16 +224,16 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
+    protected void defineSynchedData() {
+        super.defineSynchedData();
         for (final DataParameter<ItemStack> parameter : CARGO) {
-            this.dataManager.register(parameter, ItemStack.EMPTY);
+            this.entityData.define(parameter, ItemStack.EMPTY);
         }
     }
 
     public void openContainer(final PlayerEntity player) {
-        if (!this.world.isRemote) {
-            player.openContainer(new SimpleNamedContainerProvider((id, inv, plyr) -> {
+        if (!this.level.isClientSide) {
+            player.openMenu(new SimpleNamedContainerProvider((id, inv, plyr) -> {
                 return new SupplyCartContainer(id, inv, this);
             }, this.getDisplayName()));
         }
@@ -265,12 +265,12 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
                 final CompoundNBT display = this.nbt.getCompound("display");
                 if (display.contains("Lore", Constants.NBT.TAG_LIST)) {
                     final ListNBT lore = display.getList("Lore", Constants.NBT.TAG_STRING);
-                    final String descKey = this.disc.getTranslationKey() + ".desc";
+                    final String descKey = this.disc.getDescriptionId() + ".desc";
                     for (int i = lore.size(); i --> 0; ) {
                         final String s = lore.getString(i);
                         final ITextComponent component;
                         try {
-                            component = ITextComponent.Serializer.getComponentFromJson(s);
+                            component = ITextComponent.Serializer.fromJson(s);
                         } catch (final JsonParseException ignored) {
                             continue;
                         }
@@ -281,7 +281,7 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
                 }
             }
             if (this.nbt.isEmpty()) this.stack.setTag(null);
-            ItemHandlerHelper.giveItemToPlayer(player, this.disc, player.inventory.currentItem);
+            ItemHandlerHelper.giveItemToPlayer(player, this.disc, player.inventory.selected);
             return true;
         }
 
@@ -291,17 +291,17 @@ public final class SupplyCartEntity extends AbstractDrawnInventoryEntity {
             if (nbt == null || !nbt.contains("BlockEntityTag", Constants.NBT.TAG_COMPOUND)) return EMPTY;
             final CompoundNBT tag = nbt.getCompound("BlockEntityTag");
             if (!tag.contains("RecordItem", Constants.NBT.TAG_COMPOUND)) return EMPTY;
-            return new DiscTag(stack, nbt, tag, ItemStack.read(tag.getCompound("RecordItem")));
+            return new DiscTag(stack, nbt, tag, ItemStack.of(tag.getCompound("RecordItem")));
         }
 
         static boolean insert(final ItemStack stack, final ItemStack disc) {
             if (stack.getItem() != Items.JUKEBOX) return false;
-            final CompoundNBT tag = stack.getOrCreateChildTag("BlockEntityTag");
+            final CompoundNBT tag = stack.getOrCreateTagElement("BlockEntityTag");
             if (tag.contains("RecordItem", Constants.NBT.TAG_COMPOUND)) return false;
-            tag.put("RecordItem", disc.write(new CompoundNBT()));
-            final CompoundNBT display = stack.getOrCreateChildTag("display");
+            tag.put("RecordItem", disc.save(new CompoundNBT()));
+            final CompoundNBT display = stack.getOrCreateTagElement("display");
             final ListNBT lore = display.getList("Lore", Constants.NBT.TAG_STRING);
-            lore.add(StringNBT.valueOf(ITextComponent.Serializer.toJson(new TranslationTextComponent(disc.getTranslationKey() + ".desc"))));
+            lore.add(StringNBT.valueOf(ITextComponent.Serializer.toJson(new TranslationTextComponent(disc.getDescriptionId() + ".desc"))));
             display.put("Lore", lore);
             return true;
         }

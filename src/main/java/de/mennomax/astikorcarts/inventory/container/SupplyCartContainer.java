@@ -8,7 +8,7 @@ import net.minecraftforge.items.SlotItemHandler;
 
 public final class SupplyCartContainer extends CartContainer {
     public SupplyCartContainer(final int id, final PlayerInventory playerInv, final AbstractDrawnInventoryEntity cart) {
-        super(ContainerType.GENERIC_9X6, id, cart);
+        super(ContainerType.GENERIC_9x6, id, cart);
         final int upperInvHeight = 36;
 
         for (int i = 0; i < 6; ++i) {

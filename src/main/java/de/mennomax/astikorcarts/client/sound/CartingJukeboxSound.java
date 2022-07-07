@@ -24,11 +24,11 @@ public class CartingJukeboxSound extends TickableSound {
     @Override
     public void tick() {
         if (this.cart.isAlive() && getDisc(this.cart.getDisc()) == this.disc) {
-            this.x = (float) this.cart.getPosX();
-            this.y = (float) this.cart.getPosY();
-            this.z = (float) this.cart.getPosZ();
+            this.x = (float) this.cart.getX();
+            this.y = (float) this.cart.getY();
+            this.z = (float) this.cart.getZ();
         } else {
-            this.finishPlaying();
+            this.stop();
         }
     }
 
@@ -37,9 +37,9 @@ public class CartingJukeboxSound extends TickableSound {
         final Minecraft mc = Minecraft.getInstance();
         final ClientPlayerEntity player = mc.player;
         if (player == null) return;
-        mc.getSoundHandler().play(new CartingJukeboxSound(e, disc));
-        if (e.getDistanceSq(player) < 64.0D * 64.0D) {
-            mc.ingameGUI.func_238451_a_(disc.getDescription());
+        mc.getSoundManager().play(new CartingJukeboxSound(e, disc));
+        if (e.distanceToSqr(player) < 64.0D * 64.0D) {
+            mc.gui.setNowPlaying(disc.getDisplayName());
         }
     }
 

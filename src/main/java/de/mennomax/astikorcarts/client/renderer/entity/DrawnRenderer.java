@@ -27,16 +27,16 @@ public abstract class DrawnRenderer<T extends AbstractDrawnEntity, M extends Ent
 
     @Override
     public void render(final T entity, final float yaw, final float delta, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight) {
-        stack.push();
+        stack.pushPose();
         final AbstractDrawnEntity.RenderInfo info = entity.getInfo(delta);
         this.setupRotation(entity, info.getYaw(), delta, stack);
 
-        this.model.setRotationAngles(entity, delta, 0.0F, 0.0F, 0.0F, info.getPitch());
-        final IVertexBuilder buf = source.getBuffer(this.model.getRenderType(this.getEntityTexture(entity)));
-        this.model.render(stack, buf, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.model.setupAnim(entity, delta, 0.0F, 0.0F, 0.0F, info.getPitch());
+        final IVertexBuilder buf = source.getBuffer(this.model.renderType(this.getTextureLocation(entity)));
+        this.model.renderToBuffer(stack, buf, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         this.renderContents(entity, delta, stack, source, packedLight);
 
-        stack.pop();
+        stack.popPose();
         super.render(entity, info.getYaw(), delta, stack, source, packedLight);
     }
 
@@ -44,26 +44,26 @@ public abstract class DrawnRenderer<T extends AbstractDrawnEntity, M extends Ent
     }
 
     public void setupRotation(final T entity, final float entityYaw, final float delta, final MatrixStack stack) {
-        stack.rotate(Vector3f.YP.rotationDegrees(180.0F - entityYaw));
+        stack.mulPose(Vector3f.YP.rotationDegrees(180.0F - entityYaw));
         final float time = entity.getTimeSinceHit() - delta;
         if (time > 0.0F) {
             final double center = 1.2D;
             stack.translate(0.0D, center, 0.0D);
             final float damage = Math.max(entity.getDamageTaken() - delta, 0.0F);
             final float angle = MathHelper.sin(time) * time * damage / 60.0F;
-            stack.rotate(Vector3f.ZP.rotationDegrees(angle * entity.getForwardDirection()));
+            stack.mulPose(Vector3f.ZP.rotationDegrees(angle * entity.getForwardDirection()));
             stack.translate(0.0D, -center, 0.0D);
             stack.translate(0.0D, angle / 32.0F, 0.0D);
         }
         stack.scale(-1.0F, -1.0F, 1.0F);
     }
 
-    private static final Field CHILD_MODELS = ObfuscationReflectionHelper.findField(ModelRenderer.class, "field_78805_m");
+    private static final Field CHILD_MODELS = ObfuscationReflectionHelper.findField(ModelRenderer.class, "children");
 
     @SuppressWarnings("unchecked")
     protected void attach(final ModelRenderer bone, final ModelRenderer attachment, final Consumer<MatrixStack> function, final MatrixStack stack) {
-        stack.push();
-        bone.translateRotate(stack);
+        stack.pushPose();
+        bone.translateAndRotate(stack);
         if (bone == attachment) {
             function.accept(stack);
         } else {
@@ -77,6 +77,6 @@ public abstract class DrawnRenderer<T extends AbstractDrawnEntity, M extends Ent
                 this.attach(child, attachment, function, stack);
             }
         }
-        stack.pop();
+        stack.popPose();
     }
 }

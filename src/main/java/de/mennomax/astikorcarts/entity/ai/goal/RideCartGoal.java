@@ -6,16 +6,18 @@ import net.minecraft.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
+import net.minecraft.entity.ai.goal.Goal.Flag;
+
 public final class RideCartGoal extends Goal {
     private final Entity mob;
 
     public RideCartGoal(final Entity mob) {
         this.mob = mob;
-        this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Flag.JUMP));
+        this.setFlags(EnumSet.of(Goal.Flag.MOVE, Flag.JUMP));
     }
 
     @Override
-    public boolean shouldExecute() {
-        return this.mob.getRidingEntity() instanceof AbstractDrawnEntity;
+    public boolean canUse() {
+        return this.mob.getVehicle() instanceof AbstractDrawnEntity;
     }
 }

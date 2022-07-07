@@ -21,23 +21,23 @@ public final class PostilionRenderer extends EntityRenderer<PostilionEntity> {
     @Override
     public void render(final PostilionEntity postilion, final float yaw, final float delta, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight) {
         if (!postilion.isInvisible()) {
-            stack.push();
-            stack.rotate(Vector3f.YP.rotationDegrees(180.0F - yaw));
-            final AxisAlignedBB bounds = postilion.getBoundingBox().offset(-postilion.getPosX(), -postilion.getPosY(), -postilion.getPosZ());
-            WorldRenderer.drawBoundingBox(stack, source.getBuffer(RenderType.getLines()), bounds, 1.0F, 1.0F, 1.0F, 1.0F);
-            stack.pop();
+            stack.pushPose();
+            stack.mulPose(Vector3f.YP.rotationDegrees(180.0F - yaw));
+            final AxisAlignedBB bounds = postilion.getBoundingBox().move(-postilion.getX(), -postilion.getY(), -postilion.getZ());
+            WorldRenderer.renderLineBox(stack, source.getBuffer(RenderType.lines()), bounds, 1.0F, 1.0F, 1.0F, 1.0F);
+            stack.popPose();
             super.render(postilion, yaw, delta, stack, source, packedLight);
         }
     }
 
     @Override
-    protected boolean canRenderName(final PostilionEntity postilion) {
+    protected boolean shouldShowName(final PostilionEntity postilion) {
         return true;
     }
 
     @Nullable
     @Override
-    public ResourceLocation getEntityTexture(final PostilionEntity postilion) {
+    public ResourceLocation getTextureLocation(final PostilionEntity postilion) {
         return null;
     }
 }

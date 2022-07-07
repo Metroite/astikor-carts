@@ -38,12 +38,12 @@ public final class UpdateDrawnMessage implements Message {
         @Override
         public void accept(final UpdateDrawnMessage msg, final ClientMessageContext ctx) {
             final World world = ctx.getWorld();
-            final Entity e = world.getEntityByID(msg.cartId);
+            final Entity e = world.getEntity(msg.cartId);
             if (e instanceof AbstractDrawnEntity) {
                 if (msg.pullingId < 0) {
                     ((AbstractDrawnEntity) e).setPulling(null);
                 } else {
-                    ((AbstractDrawnEntity) e).setPulling(world.getEntityByID(msg.pullingId));
+                    ((AbstractDrawnEntity) e).setPulling(world.getEntity(msg.pullingId));
                 }
             }
         }

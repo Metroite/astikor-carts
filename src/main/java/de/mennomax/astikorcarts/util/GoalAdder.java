@@ -33,7 +33,7 @@ import java.util.function.Function;
  * <p>This class addresses the problem be adding custom goals to the beginning of the goal set.
  */
 public final class GoalAdder<T extends Entity> {
-    private static final Field GOALS = ObfuscationReflectionHelper.findField(GoalSelector.class, "field_220892_d");
+    private static final Field GOALS = ObfuscationReflectionHelper.findField(GoalSelector.class, "availableGoals");
 
     private final Class<T> type;
 
@@ -53,7 +53,7 @@ public final class GoalAdder<T extends Entity> {
 
     private void onEntityJoinWorld(final EntityJoinWorldEvent event) {
         final Entity entity = event.getEntity();
-        if (!entity.world.isRemote && this.type.isInstance(entity)) {
+        if (!entity.level.isClientSide && this.type.isInstance(entity)) {
             final Set<PrioritizedGoal> oldGoals = this.getGoals(this.type.cast(entity));
             final List<PrioritizedGoal> newGoals = new ArrayList<>(oldGoals.size() + this.goals.size());
             for (final GoalEntry<T> goal : this.goals) {

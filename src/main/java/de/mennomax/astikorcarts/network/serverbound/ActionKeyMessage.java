@@ -26,12 +26,12 @@ public final class ActionKeyMessage implements Message {
 
     public static void handle(final ActionKeyMessage msg, final ServerMessageContext ctx) {
         final ServerPlayerEntity player = ctx.getPlayer();
-        final Entity pulling = MoreObjects.firstNonNull(player.getRidingEntity(), player);
-        final World world = player.world;
+        final Entity pulling = MoreObjects.firstNonNull(player.getVehicle(), player);
+        final World world = player.level;
         AstikorWorld.get(world).map(w -> w.getDrawn(pulling)).orElse(Optional.empty())
             .map(c -> Optional.of(Pair.of(c, (Entity) null)))
-            .orElseGet(() -> world.getEntitiesWithinAABB(AbstractDrawnEntity.class, pulling.getBoundingBox().grow(2.0D), entity -> entity != pulling).stream()
-                .min(Comparator.comparing(pulling::getDistance))
+            .orElseGet(() -> world.getEntitiesOfClass(AbstractDrawnEntity.class, pulling.getBoundingBox().inflate(2.0D), entity -> entity != pulling).stream()
+                .min(Comparator.comparing(pulling::distanceTo))
                 .map(c -> Pair.of(c, pulling))
             ).ifPresent(p -> p.getFirst().setPulling(p.getSecond()));
     }

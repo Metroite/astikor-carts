@@ -25,11 +25,11 @@ public final class PlowRenderer extends DrawnRenderer<PlowEntity, PlowModel> {
 
     public PlowRenderer(final EntityRendererManager renderManager) {
         super(renderManager, new PlowModel());
-        this.shadowSize = 1.0F;
+        this.shadowRadius = 1.0F;
     }
 
     @Override
-    public ResourceLocation getEntityTexture(final PlowEntity entity) {
+    public ResourceLocation getTextureLocation(final PlowEntity entity) {
         return TEXTURE;
     }
 
@@ -42,14 +42,14 @@ public final class PlowRenderer extends DrawnRenderer<PlowEntity, PlowModel> {
                 continue;
             }
             this.attach(this.model.getBody(), this.model.getShaft(i), s -> {
-                s.rotate(Vector3f.XP.rotationDegrees(-90.0F));
-                s.rotate(Vector3f.YP.rotationDegrees(90.0F));
+                s.mulPose(Vector3f.XP.rotationDegrees(-90.0F));
+                s.mulPose(Vector3f.YP.rotationDegrees(90.0F));
                 s.translate(-4.0D / 16.0D, 1.0D / 16.0D, 0.0D);
                 if (itemStack.getItem() instanceof BlockItem) {
                     s.translate(0.0D, -0.1D, 0.0D);
-                    s.rotate(Vector3f.ZP.rotationDegrees(180.0F));
+                    s.mulPose(Vector3f.ZP.rotationDegrees(180.0F));
                 }
-                Minecraft.getInstance().getItemRenderer().renderItem(itemStack, ItemCameraTransforms.TransformType.FIXED, packedLight, OverlayTexture.NO_OVERLAY, s, source);
+                Minecraft.getInstance().getItemRenderer().renderStatic(itemStack, ItemCameraTransforms.TransformType.FIXED, packedLight, OverlayTexture.NO_OVERLAY, s, source);
             }, stack);
         }
     }

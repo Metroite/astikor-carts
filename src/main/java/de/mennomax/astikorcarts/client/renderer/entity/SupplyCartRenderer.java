@@ -56,7 +56,7 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
 
     public SupplyCartRenderer(final EntityRendererManager renderManager) {
         super(renderManager, new SupplyCartModel());
-        this.shadowSize = 1.0F;
+        this.shadowRadius = 1.0F;
     }
 
     @Override
@@ -81,51 +81,51 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
             if (s.isEmpty()) continue;
             if (!contents.predicate.test(s)) contents = Contents.SUPPLIES;
         }
-        stack.push();
-        this.model.getBody().translateRotate(stack);
+        stack.pushPose();
+        this.model.getBody().translateAndRotate(stack);
         contents.renderer.render(this, entity, stack, source, packedLight, cargo);
-        stack.pop();
+        stack.popPose();
     }
 
     private void renderFlowers(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
-        this.model.getFlowerBasket().render(stack, source.getBuffer(this.model.getRenderType(this.getEntityTexture(entity))), packedLight, OverlayTexture.NO_OVERLAY);
-        final BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-        final BlockModelRenderer renderer = dispatcher.getBlockModelRenderer();
+        this.model.getFlowerBasket().render(stack, source.getBuffer(this.model.renderType(this.getTextureLocation(entity))), packedLight, OverlayTexture.NO_OVERLAY);
+        final BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+        final BlockModelRenderer renderer = dispatcher.getModelRenderer();
         for (int i = 0; i < cargo.size(); i++) {
             final ItemStack itemStack = cargo.get(i);
             if (!(itemStack.getItem() instanceof BlockItem)) continue;
             final int ix = i % 2, iz = i / 2;
-            final BlockState defaultState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
-            final BlockState state = defaultState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) ? defaultState.with(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER) : defaultState;
-            final IBakedModel model = dispatcher.getModelForState(state);
+            final BlockState defaultState = ((BlockItem) itemStack.getItem()).getBlock().defaultBlockState();
+            final BlockState state = defaultState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) ? defaultState.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER) : defaultState;
+            final IBakedModel model = dispatcher.getBlockModel(state);
             final int rgb = Minecraft.getInstance().getBlockColors().getColor(state, null, null, 0);
             final float r = (float) (rgb >> 16 & 255) / 255.0F;
             final float g = (float) (rgb >> 8 & 255) / 255.0F;
             final float b = (float) (rgb & 255) / 255.0F;
-            stack.push();
+            stack.pushPose();
             stack.translate(0.0D, -0.7D, -3.0D / 16.0D);
             stack.scale(0.65F, 0.65F, 0.65F);
             stack.translate(ix, 0.5D, iz - 1.0D);
-            stack.rotate(Vector3f.ZP.rotationDegrees(180.0F));
-            renderer.renderModel(stack.getLast(), source.getBuffer(RenderType.getCutout()), state, model, r, g, b, packedLight, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
-            stack.pop();
+            stack.mulPose(Vector3f.ZP.rotationDegrees(180.0F));
+            renderer.renderModel(stack.last(), source.getBuffer(RenderType.cutout()), state, model, r, g, b, packedLight, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
+            stack.popPose();
         }
     }
 
     private void renderWheel(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
         stack.translate(1.18D, 0.1D, -0.15D);
         final ModelRenderer wheel = this.model.getWheel();
-        wheel.rotateAngleX = 0.9F;
-        wheel.rotateAngleZ = (float) Math.PI * 0.3F;
-        wheel.render(stack, source.getBuffer(this.model.getRenderType(this.getEntityTexture(entity))), packedLight, OverlayTexture.NO_OVERLAY);
+        wheel.xRot = 0.9F;
+        wheel.zRot = (float) Math.PI * 0.3F;
+        wheel.render(stack, source.getBuffer(this.model.renderType(this.getTextureLocation(entity))), packedLight, OverlayTexture.NO_OVERLAY);
     }
 
     private void renderPaintings(final SupplyCartEntity entity, final MatrixStack stack, final IRenderTypeBuffer source, final int packedLight, final NonNullList<ItemStack> cargo) {
-        final IVertexBuilder buf = source.getBuffer(RenderType.getEntitySolid(Minecraft.getInstance().getPaintingSpriteUploader().getBackSprite().getAtlasTexture().getTextureLocation()));
+        final IVertexBuilder buf = source.getBuffer(RenderType.entitySolid(Minecraft.getInstance().getPaintingTextures().getBackSprite().atlas().location()));
         final ObjectList<PaintingType> types = StreamSupport.stream(ForgeRegistries.PAINTING_TYPES.spliterator(), false)
             .filter(t -> t.getWidth() == 16 && t.getHeight() == 16)
             .collect(Collectors.toCollection(ObjectArrayList::new));
-        final Random rng = new Random(entity.getUniqueID().getMostSignificantBits() ^ entity.getUniqueID().getLeastSignificantBits());
+        final Random rng = new Random(entity.getUUID().getMostSignificantBits() ^ entity.getUUID().getLeastSignificantBits());
         ObjectLists.shuffle(types, rng);
         int count = 0;
         for (final ItemStack itemStack : cargo) {
@@ -133,16 +133,16 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
             count++;
         }
         stack.translate(0.0D, -2.5D / 16.0D, 0.0D);
-        stack.rotate(Vector3f.XP.rotationDegrees(-90.0F));
+        stack.mulPose(Vector3f.XP.rotationDegrees(-90.0F));
         for (int i = 0, n = 0; i < cargo.size(); i++) {
             final ItemStack itemStack = cargo.get(i);
             if (itemStack.isEmpty()) continue;
             final PaintingType t = types.get(i % types.size());
-            stack.push();
+            stack.pushPose();
             stack.translate(0.0D, (n++ - (count - 1) * 0.5D) / count, -1.0D / 16.0D * i);
-            stack.rotate(Vector3f.ZP.rotation(rng.nextFloat() * (float) Math.PI));
+            stack.mulPose(Vector3f.ZP.rotation(rng.nextFloat() * (float) Math.PI));
             this.renderPainting(t, stack, buf, packedLight);
-            stack.pop();
+            stack.popPose();
         }
     }
 
@@ -155,27 +155,27 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
             final ItemStack itemStack = cargo.get(i);
             if (itemStack.isEmpty()) continue;
             final int ix = i % 2, iz = i / 2;
-            if (i < cargo.size() - 2 && cargo.get(i + 2).getItem().isIn(ItemTags.BEDS)) continue;
-            if (i >= 2 && cargo.get(i - 2).getItem().isIn(ItemTags.BEDS)) continue;
+            if (i < cargo.size() - 2 && cargo.get(i + 2).getItem().is(ItemTags.BEDS)) continue;
+            if (i >= 2 && cargo.get(i - 2).getItem().is(ItemTags.BEDS)) continue;
             final double x = (ix - 0.5D) * 11.0D / 16.0D;
             final double z = (iz * 11.0D - 9.0D) / 16.0D;
-            final IBakedModel model = renderer.getItemModelWithOverrides(itemStack, entity.world, null);
-            stack.push();
+            final IBakedModel model = renderer.getModel(itemStack, entity.level, null);
+            stack.pushPose();
             if (model.isGui3d() && itemStack.getItem() != Items.TRIDENT) {
                 stack.translate(x, -0.46D, z);
                 stack.scale(0.65F, 0.65F, 0.65F);
-                stack.rotate(Vector3f.ZP.rotationDegrees(180.0F));
+                stack.mulPose(Vector3f.ZP.rotationDegrees(180.0F));
                 if (itemStack.getItem() == Items.SHIELD) {
                     stack.scale(1.2F, 1.2F, 1.2F);
-                    stack.rotate(Vector3f.YP.rotationDegrees(ix == 0 ? -90.0F : 90.0F));
+                    stack.mulPose(Vector3f.YP.rotationDegrees(ix == 0 ? -90.0F : 90.0F));
                     stack.translate(0.5D, 0.8D, -0.05D);
-                    stack.rotate(Vector3f.XP.rotationDegrees(-22.5F));
-                } else if (iz < 1 && itemStack.getItem().isIn(ItemTags.BEDS)) {
+                    stack.mulPose(Vector3f.XP.rotationDegrees(-22.5F));
+                } else if (iz < 1 && itemStack.getItem().is(ItemTags.BEDS)) {
                     stack.translate(0.0D, 0.0D, 1.0D);
-                } else if (!model.isBuiltInRenderer()) {
-                    stack.rotate(Vector3f.YP.rotationDegrees(180.0F));
+                } else if (!model.isCustomRenderer()) {
+                    stack.mulPose(Vector3f.YP.rotationDegrees(180.0F));
                 }
-                renderer.renderItem(itemStack, ItemCameraTransforms.TransformType.NONE, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
+                renderer.render(itemStack, ItemCameraTransforms.TransformType.NONE, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
             } else {
                 rng.setSeed(32L * i + Objects.hashCode(itemStack.getItem().getRegistryName()));
                 stack.translate(x, -0.15D + ((ix + iz) % 2 == 0 ? 0.0D : 1.0e-4D), z);
@@ -183,20 +183,20 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
                     this.renderArmor(stack, source, packedLight, itemStack, ix);
                 } else {
                     stack.scale(0.7F, 0.7F, 0.7F);
-                    stack.rotate(Vector3f.YP.rotation(rng.nextFloat() * (float) Math.PI));
-                    stack.rotate(Vector3f.XP.rotationDegrees(-90.0F));
+                    stack.mulPose(Vector3f.YP.rotation(rng.nextFloat() * (float) Math.PI));
+                    stack.mulPose(Vector3f.XP.rotationDegrees(-90.0F));
                     final int copies = Math.min(itemStack.getCount(), (itemStack.getCount() - 1) / 16 + 2);
-                    renderer.renderItem(itemStack, ItemCameraTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
+                    renderer.render(itemStack, ItemCameraTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
                     for (int n = 1; n < copies; n++) {
-                        stack.push();
-                        stack.rotate(Vector3f.ZP.rotation(rng.nextFloat() * (float) Math.PI));
+                        stack.pushPose();
+                        stack.mulPose(Vector3f.ZP.rotation(rng.nextFloat() * (float) Math.PI));
                         stack.translate((rng.nextFloat() * 2.0F - 1.0F) * 0.05F, (rng.nextFloat() * 2.0F - 1.0F) * 0.05F, -0.1D * n);
-                        renderer.renderItem(itemStack, ItemCameraTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
-                        stack.pop();
+                        renderer.render(itemStack, ItemCameraTransforms.TransformType.FIXED, false, stack, source, packedLight, OverlayTexture.NO_OVERLAY, model);
+                        stack.popPose();
                     }
                 }
             }
-            stack.pop();
+            stack.popPose();
         }
     }
 
@@ -204,100 +204,100 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
         final Item item = itemStack.getItem();
         if (!(item instanceof ArmorItem)) return;
         final ArmorItem armor = (ArmorItem) item;
-        final EquipmentSlotType slot = armor.getEquipmentSlot();
+        final EquipmentSlotType slot = armor.getSlot();
         final BipedModel<LivingEntity> m = slot == EquipmentSlotType.LEGS ? this.leggings : this.armor;
-        stack.rotate(Vector3f.YP.rotation(ix == 0 ? (float) Math.PI * 0.5F : (float) -Math.PI * 0.5F));
-        m.setVisible(false);
-        m.isSneak = false;
-        m.isSitting = false;
-        m.isChild = false;
+        stack.mulPose(Vector3f.YP.rotation(ix == 0 ? (float) Math.PI * 0.5F : (float) -Math.PI * 0.5F));
+        m.setAllVisible(false);
+        m.crouching = false;
+        m.riding = false;
+        m.young = false;
         switch (slot) {
             case HEAD:
                 stack.translate(0.0D, 0.1D, 0.0D);
-                m.bipedHead.rotateAngleX = 0.2F;
-                m.bipedHeadwear.copyModelAngles(m.bipedHead);
-                m.bipedHead.showModel = true;
-                m.bipedHeadwear.showModel = true;
+                m.head.xRot = 0.2F;
+                m.hat.copyFrom(m.head);
+                m.head.visible = true;
+                m.hat.visible = true;
                 break;
             case CHEST:
                 stack.translate(0.0D, -0.4D, -0.15D);
-                m.bipedLeftArm.rotateAngleX = -0.15F;
-                m.bipedRightArm.rotateAngleX = -0.15F;
-                m.bipedBody.rotateAngleX = 0.9F;
-                m.bipedBody.showModel = true;
-                m.bipedRightArm.showModel = true;
-                m.bipedLeftArm.showModel = true;
+                m.leftArm.xRot = -0.15F;
+                m.rightArm.xRot = -0.15F;
+                m.body.xRot = 0.9F;
+                m.body.visible = true;
+                m.rightArm.visible = true;
+                m.leftArm.visible = true;
                 break;
             case LEGS:
                 stack.translate(0.0D, -0.7D, -0.15D);
-                m.bipedBody.rotateAngleX = 0.0F;
-                m.bipedRightLeg.rotateAngleX = 1.2F;
-                m.bipedLeftLeg.rotateAngleX = 1.2F;
-                m.bipedRightLeg.rotateAngleY = -0.3F;
-                m.bipedLeftLeg.rotateAngleY = 0.3F;
-                m.bipedBody.showModel = true;
-                m.bipedRightLeg.showModel = true;
-                m.bipedLeftLeg.showModel = true;
+                m.body.xRot = 0.0F;
+                m.rightLeg.xRot = 1.2F;
+                m.leftLeg.xRot = 1.2F;
+                m.rightLeg.yRot = -0.3F;
+                m.leftLeg.yRot = 0.3F;
+                m.body.visible = true;
+                m.rightLeg.visible = true;
+                m.leftLeg.visible = true;
                 break;
             case FEET:
                 stack.translate(0.0D, -1.15D, -0.1D);
-                m.bipedRightLeg.rotateAngleX = 0.0F;
-                m.bipedLeftLeg.rotateAngleX = 0.0F;
-                m.bipedRightLeg.rotateAngleY = -0.1F;
-                m.bipedLeftLeg.rotateAngleY = 0.0F;
-                m.bipedRightLeg.showModel = true;
-                m.bipedLeftLeg.showModel = true;
+                m.rightLeg.xRot = 0.0F;
+                m.leftLeg.xRot = 0.0F;
+                m.rightLeg.yRot = -0.1F;
+                m.leftLeg.yRot = 0.0F;
+                m.rightLeg.visible = true;
+                m.leftLeg.visible = true;
                 break;
         }
         stack.scale(0.75F, 0.75F, 0.75F);
-        final ResourceLocation tex = new ResourceLocation(armor.getArmorMaterial().getName());
-        final IVertexBuilder armorBuf = ItemRenderer.getArmorVertexBuilder(source,
-            RenderType.getArmorCutoutNoCull(new ResourceLocation(
+        final ResourceLocation tex = new ResourceLocation(armor.getMaterial().getName());
+        final IVertexBuilder armorBuf = ItemRenderer.getArmorFoilBuffer(source,
+            RenderType.armorCutoutNoCull(new ResourceLocation(
                 tex.getNamespace(),
                 String.format("textures/models/armor/%s_layer_%d.png", tex.getPath(), slot == EquipmentSlotType.LEGS ? 2 : 1)
             )),
             false,
-            itemStack.hasEffect()
+            itemStack.hasFoil()
         );
         if (armor instanceof IDyeableArmorItem) {
             final int rgb = ((IDyeableArmorItem) armor).getColor(itemStack);
             final float r = (float) (rgb >> 16 & 255) / 255.0F;
             final float g = (float) (rgb >> 8 & 255) / 255.0F;
             final float b = (float) (rgb & 255) / 255.0F;
-            m.render(stack, armorBuf, packedLight, OverlayTexture.NO_OVERLAY, r, g, b, 1.0F);
-            final IVertexBuilder overlayBuf = ItemRenderer.getArmorVertexBuilder(source,
-                RenderType.getArmorCutoutNoCull(new ResourceLocation(
+            m.renderToBuffer(stack, armorBuf, packedLight, OverlayTexture.NO_OVERLAY, r, g, b, 1.0F);
+            final IVertexBuilder overlayBuf = ItemRenderer.getArmorFoilBuffer(source,
+                RenderType.armorCutoutNoCull(new ResourceLocation(
                     tex.getNamespace(),
                     String.format("textures/models/armor/%s_layer_%d_overlay.png", tex.getPath(), slot == EquipmentSlotType.LEGS ? 2 : 1)
                 )),
                 false,
-                itemStack.hasEffect()
+                itemStack.hasFoil()
             );
-            m.render(stack, overlayBuf, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+            m.renderToBuffer(stack, overlayBuf, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         } else {
-            m.render(stack, armorBuf, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+            m.renderToBuffer(stack, armorBuf, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 
     private void renderPainting(final PaintingType painting, final MatrixStack stack, final IVertexBuilder buf, final int packedLight) {
-        final PaintingSpriteUploader uploader = Minecraft.getInstance().getPaintingSpriteUploader();
+        final PaintingSpriteUploader uploader = Minecraft.getInstance().getPaintingTextures();
         final int width = painting.getWidth();
         final int height = painting.getHeight();
-        final TextureAtlasSprite art = uploader.getSpriteForPainting(painting);
+        final TextureAtlasSprite art = uploader.get(painting);
         final TextureAtlasSprite back = uploader.getBackSprite();
-        final Matrix4f model = stack.getLast().getMatrix();
-        final Matrix3f normal = stack.getLast().getNormal();
+        final Matrix4f model = stack.last().pose();
+        final Matrix3f normal = stack.last().normal();
         final int blockWidth = width / 16;
         final int blockHeight = height / 16;
         final float offsetX = -blockWidth / 2.0F;
         final float offsetY = -blockHeight / 2.0F;
         final float depth = 0.5F / 16.0F;
-        final float bu0 = back.getMinU();
-        final float bu1 = back.getMaxU();
-        final float bv0 = back.getMinV();
-        final float bv1 = back.getMaxV();
-        final float bup = back.getInterpolatedU(1.0D);
-        final float bvp = back.getInterpolatedV(1.0D);
+        final float bu0 = back.getU0();
+        final float bu1 = back.getU1();
+        final float bv0 = back.getV0();
+        final float bv1 = back.getV1();
+        final float bup = back.getU(1.0D);
+        final float bvp = back.getV(1.0D);
         final double uvX = 16.0D / blockWidth;
         final double uvY = 16.0D / blockHeight;
         for (int x = 0; x < blockWidth; ++x) {
@@ -306,10 +306,10 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
                 final float x0 = offsetX + x;
                 final float y1 = offsetY + (y + 1);
                 final float y0 = offsetY + y;
-                final float u0 = art.getInterpolatedU(uvX * (blockWidth - x));
-                final float u1 = art.getInterpolatedU(uvX * (blockWidth - x - 1));
-                final float v0 = art.getInterpolatedV(uvY * (blockHeight - y));
-                final float v1 = art.getInterpolatedV(uvY * (blockHeight - y - 1));
+                final float u0 = art.getU(uvX * (blockWidth - x));
+                final float u1 = art.getU(uvX * (blockWidth - x - 1));
+                final float v0 = art.getV(uvY * (blockHeight - y));
+                final float v1 = art.getV(uvY * (blockHeight - y - 1));
                 this.vert(model, normal, buf, x1, y0, u1, v0, -depth, 0, 0, -1, packedLight);
                 this.vert(model, normal, buf, x0, y0, u0, v0, -depth, 0, 0, -1, packedLight);
                 this.vert(model, normal, buf, x0, y1, u0, v1, -depth, 0, 0, -1, packedLight);
@@ -339,16 +339,16 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
     }
 
     private void vert(final Matrix4f stack, final Matrix3f normal, final IVertexBuilder buf, final float x, final float y, final float u, final float v, final float z, final int nx, final int ny, final int nz, final int packedLight) {
-        buf.pos(stack, x, y, z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(u, v).overlay(OverlayTexture.NO_OVERLAY).lightmap(packedLight).normal(normal, nx, ny, nz).endVertex();
+        buf.vertex(stack, x, y, z).color(0xFF, 0xFF, 0xFF, 0xFF).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, nx, ny, nz).endVertex();
     }
 
     @Override
-    public ResourceLocation getEntityTexture(final SupplyCartEntity entity) {
+    public ResourceLocation getTextureLocation(final SupplyCartEntity entity) {
         return TEXTURE;
     }
 
     private enum Contents {
-        FLOWERS(s -> s.getItem() instanceof BlockItem && s.getItem().isIn(ItemTags.FLOWERS), SupplyCartRenderer::renderFlowers),
+        FLOWERS(s -> s.getItem() instanceof BlockItem && s.getItem().is(ItemTags.FLOWERS), SupplyCartRenderer::renderFlowers),
         PAINTINGS(s -> s.getItem() == Items.PAINTING, SupplyCartRenderer::renderPaintings),
         WHEEL(s -> AstikorCarts.Items.WHEEL.test(s.getItem()), SupplyCartRenderer::renderWheel),
         SUPPLIES(s -> true, SupplyCartRenderer::renderSupplies);

@@ -20,21 +20,21 @@ public final class PostilionEntity extends DummyLivingEntity {
     }
 
     @Override
-    public double getYOffset() {
+    public double getMyRidingOffset() {
         return 0.125D;
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!this.world.isRemote) {
+        if (!this.level.isClientSide) {
             final LivingEntity coachman = this.getCoachman();
             if (coachman != null) {
-                this.rotationYaw = coachman.rotationYaw;
-                this.prevRotationYaw = this.rotationYaw;
-                this.rotationPitch = coachman.rotationPitch * 0.5F;
-                this.moveForward = coachman.moveForward;
-                this.moveStrafing = 0.0F;
+                this.yRot = coachman.yRot;
+                this.yRotO = this.yRot;
+                this.xRot = coachman.xRot * 0.5F;
+                this.zza = coachman.zza;
+                this.xxa = 0.0F;
             } else {
                 this.remove();
             }
@@ -43,16 +43,16 @@ public final class PostilionEntity extends DummyLivingEntity {
 
     @Nullable
     private LivingEntity getCoachman() {
-        final Entity mount = this.getRidingEntity();
+        final Entity mount = this.getVehicle();
         if (mount != null) {
-            return AstikorWorld.get(this.world).map(m -> m.getDrawn(mount)).orElse(Optional.empty())
+            return AstikorWorld.get(this.level).map(m -> m.getDrawn(mount)).orElse(Optional.empty())
                 .map(AbstractDrawnEntity::getControllingPassenger).orElse(null);
         }
         return null;
     }
 
     @Override
-    public IPacket<?> createSpawnPacket() {
+    public IPacket<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

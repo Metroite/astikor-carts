@@ -24,9 +24,9 @@ public final class ToggleSlowMessage implements Message {
     }
 
     public static Optional<AbstractDrawnEntity> getCart(final PlayerEntity player) {
-        final Entity ridden = player.getRidingEntity();
+        final Entity ridden = player.getVehicle();
         if (ridden == null) return Optional.empty();
         if (ridden instanceof AbstractDrawnEntity) return Optional.of((AbstractDrawnEntity) ridden);
-        return AstikorWorld.get(ridden.world).resolve().flatMap(w -> w.getDrawn(ridden));
+        return AstikorWorld.get(ridden.level).resolve().flatMap(w -> w.getDrawn(ridden));
     }
 }

@@ -20,24 +20,24 @@ public final class AnimalCartModel extends CartModel<AnimalCartEntity> {
 
         this.cartBase = new ModelRenderer(this, 0, 0);
         this.cartBase.addBox(-15.5F, -10.0F, -2.0F, 29, 20, 1);
-        this.cartBase.rotateAngleX = (float) -Math.PI / 2.0F;
-        this.cartBase.rotateAngleY = (float) -Math.PI / 2.0F;
+        this.cartBase.xRot = (float) -Math.PI / 2.0F;
+        this.cartBase.yRot = (float) -Math.PI / 2.0F;
 
         this.shaft = new ModelRenderer(this, 0, 25);
-        this.shaft.setRotationPoint(0.0F, -5.0F, -15.0F);
-        this.shaft.rotateAngleY = (float) Math.PI / 2.0F;
+        this.shaft.setPos(0.0F, -5.0F, -15.0F);
+        this.shaft.yRot = (float) Math.PI / 2.0F;
         this.shaft.addBox(0.0F, -0.5F, -8.0F, 20, 2, 1);
         this.shaft.addBox(0.0F, -0.5F, 7.0F, 20, 2, 1);
 
         this.boardLeft = new ModelRenderer(this, 0, 28);
         this.boardLeft.addBox(-10.0F, -14.5F, 9F, 8, 31, 2);
-        this.boardLeft.rotateAngleX = (float) -Math.PI / 2.0F;
-        this.boardLeft.rotateAngleZ = (float) Math.PI / 2.0F;
+        this.boardLeft.xRot = (float) -Math.PI / 2.0F;
+        this.boardLeft.zRot = (float) Math.PI / 2.0F;
 
         this.boardRight = new ModelRenderer(this, 0, 28);
         this.boardRight.addBox(-10.0F, -14.5F, -11F, 8, 31, 2);
-        this.boardRight.rotateAngleX = (float) -Math.PI / 2.0F;
-        this.boardRight.rotateAngleZ = (float) Math.PI / 2.0F;
+        this.boardRight.xRot = (float) -Math.PI / 2.0F;
+        this.boardRight.zRot = (float) Math.PI / 2.0F;
 
         this.boardBack = new ModelRenderer(this, 20, 28);
         this.boardBack.addBox(-9F, -10.0F, 12.5F, 18, 8, 2);
@@ -52,6 +52,6 @@ public final class AnimalCartModel extends CartModel<AnimalCartEntity> {
         this.body.addChild(this.boardRight);
         this.body.addChild(this.boardBack);
         this.body.addChild(this.boardFront);
-        this.body.setRotationPoint(0.0F, -11.0F, 1.0F);
+        this.body.setPos(0.0F, -11.0F, 1.0F);
     }
 }

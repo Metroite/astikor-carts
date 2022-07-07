@@ -27,7 +27,7 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
 
     public AnimalCartRenderer(final EntityRendererManager renderManager) {
         super(renderManager, new AnimalCartModel());
-        this.shadowSize = 1.0F;
+        this.shadowRadius = 1.0F;
     }
 
     @Override
@@ -54,21 +54,21 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
     }
 
     private void horseTransform(final Mat4f m, final HorseEntity entity, final float delta) {
-        final HorseModel<HorseEntity> horseModel = ((HorseRenderer) this.renderManager.getRenderer(entity)).getEntityModel();
+        final HorseModel<HorseEntity> horseModel = ((HorseRenderer) this.entityRenderDispatcher.getRenderer(entity)).getModel();
         float strength = 0.0F;
         float swing = 0.0F;
         if (!entity.isPassenger() && entity.isAlive()) {
-            strength = MathHelper.lerp(delta, entity.prevLimbSwingAmount, entity.limbSwingAmount);
-            swing = entity.limbSwing - entity.limbSwingAmount * (1.0F - delta);
-            if (entity.isChild()) {
+            strength = MathHelper.lerp(delta, entity.animationSpeedOld, entity.animationSpeed);
+            swing = entity.animationPosition - entity.animationSpeed * (1.0F - delta);
+            if (entity.isBaby()) {
                 swing *= 3.0F;
             }
             if (strength > 1.0F) {
                 strength = 1.0F;
             }
         }
-        horseModel.setLivingAnimations(entity, swing, strength, delta);
-        final ModelRenderer head = ObfuscationReflectionHelper.getPrivateValue(HorseModel.class, horseModel, "field_217128_b");
+        horseModel.prepareMobModel(entity, swing, strength, delta);
+        final ModelRenderer head = ObfuscationReflectionHelper.getPrivateValue(HorseModel.class, horseModel, "headParts");
         final Mat4f tmp = new Mat4f();
         m.mul(tmp.makeScale(-1.0F, -1.0F, 1.0F));
         m.mul(tmp.makeScale(1.1F, 1.1F, 1.1F));
@@ -78,34 +78,34 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
 
     private void transform(final Mat4f m, final ModelRenderer bone) {
         final Mat4f tmp = new Mat4f();
-        m.mul(tmp.makeTranslation(bone.rotationPointX / 16.0F, bone.rotationPointY / 16.0F, bone.rotationPointZ / 16.0F));
-        if (bone.rotateAngleZ != 0.0F) {
-            m.mul(tmp.makeRotation(bone.rotateAngleZ, 0.0F, 0.0F, 1.0F));
+        m.mul(tmp.makeTranslation(bone.x / 16.0F, bone.y / 16.0F, bone.z / 16.0F));
+        if (bone.zRot != 0.0F) {
+            m.mul(tmp.makeRotation(bone.zRot, 0.0F, 0.0F, 1.0F));
         }
-        if (bone.rotateAngleY != 0.0F) {
-            m.mul(tmp.makeRotation(bone.rotateAngleY, 0.0F, 1.0F, 0.0F));
+        if (bone.yRot != 0.0F) {
+            m.mul(tmp.makeRotation(bone.yRot, 0.0F, 1.0F, 0.0F));
         }
-        if (bone.rotateAngleX != 0.0F) {
-            m.mul(tmp.makeRotation(bone.rotateAngleX, 1.0F, 0.0F, 0.0F));
+        if (bone.xRot != 0.0F) {
+            m.mul(tmp.makeRotation(bone.xRot, 1.0F, 0.0F, 0.0F));
         }
     }
 
     private Mat4f modelView(final Entity entity, final float delta) {
         final Mat4f m = new Mat4f();
         m.makeTranslation(
-            (float) MathHelper.lerp(delta, entity.lastTickPosX, entity.getPosX()),
-            (float) MathHelper.lerp(delta, entity.lastTickPosY, entity.getPosY()),
-            (float) MathHelper.lerp(delta, entity.lastTickPosZ, entity.getPosZ()));
+            (float) MathHelper.lerp(delta, entity.xOld, entity.getX()),
+            (float) MathHelper.lerp(delta, entity.yOld, entity.getY()),
+            (float) MathHelper.lerp(delta, entity.zOld, entity.getZ()));
         final Mat4f r = new Mat4f();
         final float prevYaw, yaw;
         if (entity instanceof LivingEntity) {
-            prevYaw = ((LivingEntity) entity).prevRenderYawOffset;
-            yaw = ((LivingEntity) entity).renderYawOffset;
+            prevYaw = ((LivingEntity) entity).yBodyRotO;
+            yaw = ((LivingEntity) entity).yBodyRot;
         } else {
-            prevYaw = entity.prevRotationYaw;
-            yaw = entity.rotationYaw;
+            prevYaw = entity.yRotO;
+            yaw = entity.yRot;
         }
-        r.makeRotation((float) Math.toRadians(180.0F - MathHelper.interpolateAngle(delta, prevYaw, yaw)), 0.0F, 1.0F, 0.0F);
+        r.makeRotation((float) Math.toRadians(180.0F - MathHelper.rotLerp(delta, prevYaw, yaw)), 0.0F, 1.0F, 0.0F);
         m.mul(r);
         return m;
     }
@@ -120,7 +120,7 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
 
     private void renderLead(final double x, final double y, final double z, final double dx, final double dy, final double dz, final int offset) {
         final Tessellator tes = Tessellator.getInstance();
-        final BufferBuilder buf = tes.getBuffer();
+        final BufferBuilder buf = tes.getBuilder();
         RenderSystem.disableTexture();
         RenderSystem.disableLighting();
         RenderSystem.disableCull();
@@ -143,10 +143,10 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
                 b *= 0.7F;
             }
             final float t = (float) i / n;
-            buf.pos(x + dx * t, y + dy * (t * t + t) * 0.5D - w, z + dz * t).color(r, g, b, 1.0F).endVertex();
-            buf.pos(x + dx * t, y + dy * (t * t + t) * 0.5D + w, z + dz * t).color(r, g, b, 1.0F).endVertex();
+            buf.vertex(x + dx * t, y + dy * (t * t + t) * 0.5D - w, z + dz * t).color(r, g, b, 1.0F).endVertex();
+            buf.vertex(x + dx * t, y + dy * (t * t + t) * 0.5D + w, z + dz * t).color(r, g, b, 1.0F).endVertex();
         }
-        tes.draw();
+        tes.end();
         buf.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
         for (int i = 0; i <= n; i++) {
             float r = r0;
@@ -158,17 +158,17 @@ public final class AnimalCartRenderer extends DrawnRenderer<AnimalCartEntity, An
                 b *= 0.7F;
             }
             final float t = (float) i / n;
-            buf.pos(x + dx * t + w * -nz, y + dy * (t * t + t) * 0.5D, z + dz * t + w * nx).color(r, g, b, 1.0F).endVertex();
-            buf.pos(x + dx * t + w * nz, y + dy * (t * t + t) * 0.5D, z + dz * t + w * -nx).color(r, g, b, 1.0F).endVertex();
+            buf.vertex(x + dx * t + w * -nz, y + dy * (t * t + t) * 0.5D, z + dz * t + w * nx).color(r, g, b, 1.0F).endVertex();
+            buf.vertex(x + dx * t + w * nz, y + dy * (t * t + t) * 0.5D, z + dz * t + w * -nx).color(r, g, b, 1.0F).endVertex();
         }
-        tes.draw();
+        tes.end();
         RenderSystem.enableLighting();
         RenderSystem.enableTexture();
         RenderSystem.enableCull();
     }
 
     @Override
-    public ResourceLocation getEntityTexture(final AnimalCartEntity entity) {
+    public ResourceLocation getTextureLocation(final AnimalCartEntity entity) {
         return TEXTURE;
     }
 }

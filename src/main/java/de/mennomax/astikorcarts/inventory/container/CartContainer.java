@@ -20,34 +20,34 @@ public abstract class CartContainer extends Container {
     }
 
     @Override
-    public boolean canInteractWith(final PlayerEntity playerIn) {
-        return this.cart.isAlive() && this.cart.getDistance(playerIn) < 8.0F;
+    public boolean stillValid(final PlayerEntity playerIn) {
+        return this.cart.isAlive() && this.cart.distanceTo(playerIn) < 8.0F;
     }
 
     @Override
-    public ItemStack transferStackInSlot(final PlayerEntity playerIn, final int index) {
+    public ItemStack quickMoveStack(final PlayerEntity playerIn, final int index) {
         final ItemStack itemstack = ItemStack.EMPTY;
-        final Slot slot = this.inventorySlots.get(index);
-        if (slot != null && slot.getHasStack()) {
-            final ItemStack itemstack1 = slot.getStack();
+        final Slot slot = this.slots.get(index);
+        if (slot != null && slot.hasItem()) {
+            final ItemStack itemstack1 = slot.getItem();
             if (index < this.cartInv.getSlots()) {
-                if (!this.mergeItemStack(itemstack1, this.cartInv.getSlots(), this.inventorySlots.size(), true)) {
+                if (!this.moveItemStackTo(itemstack1, this.cartInv.getSlots(), this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.mergeItemStack(itemstack1, 0, this.cartInv.getSlots(), false)) {
+            } else if (!this.moveItemStackTo(itemstack1, 0, this.cartInv.getSlots(), false)) {
                 return ItemStack.EMPTY;
             }
             if (itemstack1.isEmpty()) {
-                slot.putStack(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             } else {
-                slot.onSlotChanged();
+                slot.setChanged();
             }
         }
         return itemstack;
     }
 
     @Override
-    public void onContainerClosed(final PlayerEntity playerIn) {
-        super.onContainerClosed(playerIn);
+    public void removed(final PlayerEntity playerIn) {
+        super.removed(playerIn);
     }
 }

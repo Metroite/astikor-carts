@@ -32,6 +32,8 @@ import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.lwjgl.glfw.GLFW;
 
+import de.mennomax.astikorcarts.Initializer.Context;
+
 public final class ClientInitializer extends CommonInitializer {
     private final KeyBinding action = new KeyBinding("key.astikorcarts.desc", GLFW.GLFW_KEY_R, "key.categories.astikorcarts");
 
@@ -42,12 +44,12 @@ public final class ClientInitializer extends CommonInitializer {
         mod.bus().<TickEvent.ClientTickEvent>addListener(e -> {
             if (e.phase == TickEvent.Phase.END) {
                 final Minecraft mc = Minecraft.getInstance();
-                final World world = mc.world;
+                final World world = mc.level;
                 if (world != null) {
-                    while (this.action.isPressed()) {
+                    while (this.action.consumeClick()) {
                         AstikorCarts.CHANNEL.sendToServer(new ActionKeyMessage());
                     }
-                    if (!mc.isGamePaused()) {
+                    if (!mc.isPaused()) {
                         AstikorWorld.get(world).ifPresent(AstikorWorld::tick);
                     }
                 }
@@ -58,10 +60,10 @@ public final class ClientInitializer extends CommonInitializer {
             final PlayerEntity player = mc.player;
             if (player != null) {
                 if (ToggleSlowMessage.getCart(player).isPresent()) {
-                    final KeyBinding binding = mc.gameSettings.keyBindSprint;
-                    while (binding.isPressed()) {
+                    final KeyBinding binding = mc.options.keySprint;
+                    while (binding.consumeClick()) {
                         AstikorCarts.CHANNEL.sendToServer(new ToggleSlowMessage());
-                        KeyBinding.setKeyBindState(binding.getKey(), false);
+                        KeyBinding.set(binding.getKey(), false);
                     }
                 }
             }
@@ -69,7 +71,7 @@ public final class ClientInitializer extends CommonInitializer {
         mod.bus().<GuiOpenEvent>addListener(e -> {
             if (e.getGui() instanceof InventoryScreen) {
                 final ClientPlayerEntity player = Minecraft.getInstance().player;
-                if (player != null && player.getRidingEntity() instanceof SupplyCartEntity) {
+                if (player != null && player.getVehicle() instanceof SupplyCartEntity) {
                     e.setCanceled(true);
                     AstikorCarts.CHANNEL.sendToServer(new OpenSupplyCartMessage());
                 }
@@ -80,7 +82,7 @@ public final class ClientInitializer extends CommonInitializer {
             RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.PLOW.get(), PlowRenderer::new);
             RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.ANIMAL_CART.get(), AnimalCartRenderer::new);
             RenderingRegistry.registerEntityRenderingHandler(AstikorCarts.EntityTypes.POSTILION.get(), PostilionRenderer::new);
-            ScreenManager.registerFactory(AstikorCarts.ContainerTypes.PLOW_CART.get(), PlowScreen::new);
+            ScreenManager.register(AstikorCarts.ContainerTypes.PLOW_CART.get(), PlowScreen::new);
             ClientRegistry.registerKeyBinding(this.action);
         });
         new AssembledTextureFactory()

@@ -26,7 +26,7 @@ public abstract class AbstractDrawnInventoryEntity extends AbstractDrawnEntity {
     protected abstract ItemStackHandler initInventory();
 
     @Override
-    public boolean replaceItemInInventory(final int inventorySlot, final ItemStack itemStackIn) {
+    public boolean setSlot(final int inventorySlot, final ItemStack itemStackIn) {
         if (inventorySlot >= 0 && inventorySlot < this.inventory.getSlots()) {
             this.inventory.setStackInSlot(inventorySlot, itemStackIn);
             return true;
@@ -38,19 +38,19 @@ public abstract class AbstractDrawnInventoryEntity extends AbstractDrawnEntity {
     @Override
     public void onDestroyedAndDoDrops(final DamageSource source) {
         for (int i = 0; i < this.inventory.getSlots(); i++) {
-            InventoryHelper.spawnItemStack(this.world, this.getPosX(), this.getPosY(), this.getPosZ(), this.inventory.getStackInSlot(i));
+            InventoryHelper.dropItemStack(this.level, this.getX(), this.getY(), this.getZ(), this.inventory.getStackInSlot(i));
         }
     }
 
     @Override
-    protected void readAdditional(final CompoundNBT compound) {
-        super.readAdditional(compound);
+    protected void readAdditionalSaveData(final CompoundNBT compound) {
+        super.readAdditionalSaveData(compound);
         this.inventory.deserializeNBT(compound.getCompound("Items"));
     }
 
     @Override
-    protected void writeAdditional(final CompoundNBT compound) {
-        super.writeAdditional(compound);
+    protected void addAdditionalSaveData(final CompoundNBT compound) {
+        super.addAdditionalSaveData(compound);
         compound.put("Items", this.inventory.serializeNBT());
     }
 

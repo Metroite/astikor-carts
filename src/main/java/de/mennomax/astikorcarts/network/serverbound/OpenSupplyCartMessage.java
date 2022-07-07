@@ -18,7 +18,7 @@ public final class OpenSupplyCartMessage implements Message {
 
     public static void handle(final OpenSupplyCartMessage msg, final ServerMessageContext ctx) {
         final PlayerEntity player = ctx.getPlayer();
-        final Entity ridden = player.getRidingEntity();
+        final Entity ridden = player.getVehicle();
         if (ridden instanceof SupplyCartEntity) {
             ((SupplyCartEntity) ridden).openContainer(player);
         }

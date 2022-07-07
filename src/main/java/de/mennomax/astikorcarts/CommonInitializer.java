@@ -54,7 +54,7 @@ public class CommonInitializer implements Initializer {
                     container.addConfig(new ModConfig(ModConfig.Type.COMMON, AstikorCartsConfig.spec(), container));
                     this.run = false;
                     LogicalSidedProvider.WORKQUEUE.<ThreadTaskExecutor<Runnable>>get(EffectiveSide.get())
-                        .enqueue(() -> ObjectHolderRegistry.removeHandler(this));
+                        .tell(() -> ObjectHolderRegistry.removeHandler(this));
                 }
             }
         });
@@ -71,7 +71,7 @@ public class CommonInitializer implements Initializer {
                 }
             }, SimpleAstikorWorld::new);
             e.enqueueWork(() -> {
-                GlobalEntityTypeAttributes.put(AstikorCarts.EntityTypes.POSTILION.get(), LivingEntity.registerAttributes().create()); // TODO: remove in 1.17
+                GlobalEntityTypeAttributes.put(AstikorCarts.EntityTypes.POSTILION.get(), LivingEntity.createLivingAttributes().build()); // TODO: remove in 1.17
             });
         });
         /*mod.modBus().<EntityAttributeCreationEvent>addListener(e -> {

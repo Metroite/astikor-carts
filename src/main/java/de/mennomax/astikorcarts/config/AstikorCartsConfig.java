@@ -101,7 +101,7 @@ public final class AstikorCartsConfig {
                 StreamSupport.stream(ForgeRegistries.ENTITIES.spliterator(), false)
                     .filter(type -> {
                         final Class<?> entityClass = TypeResolver.resolveRawArgument(Supplier.class, Objects.requireNonNull(
-                            ObfuscationReflectionHelper.getPrivateValue(EntityType.class, type, "field_200732_aK"),
+                            ObfuscationReflectionHelper.getPrivateValue(EntityType.class, type, "factory"),
                             "factory"
                         ).getClass());
                         if (Entity.class.equals(entityClass)) return type == EntityType.PLAYER;

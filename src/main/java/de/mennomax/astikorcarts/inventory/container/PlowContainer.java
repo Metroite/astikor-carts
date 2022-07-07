@@ -11,7 +11,7 @@ import net.minecraftforge.items.SlotItemHandler;
 
 public final class PlowContainer extends CartContainer {
     public PlowContainer(final int id, final PlayerInventory playerInv, final PacketBuffer buf) {
-        this(id, playerInv, (AbstractDrawnInventoryEntity) playerInv.player.world.getEntityByID(buf.readInt()));
+        this(id, playerInv, (AbstractDrawnInventoryEntity) playerInv.player.level.getEntity(buf.readInt()));
     }
 
     public PlowContainer(final int id, final PlayerInventory playerInv, final AbstractDrawnInventoryEntity cart) {
@@ -37,7 +37,7 @@ public final class PlowContainer extends CartContainer {
         }
 
         @Override
-        public boolean isItemValid(final ItemStack stack) {
+        public boolean mayPlace(final ItemStack stack) {
             return true;
         }
     }

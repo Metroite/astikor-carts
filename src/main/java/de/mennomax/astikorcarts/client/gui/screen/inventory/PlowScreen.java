@@ -18,18 +18,18 @@ public final class PlowScreen extends ContainerScreen<CartContainer> {
     }
 
     @Override
-    protected void drawGuiContainerBackgroundLayer(final MatrixStack stack, final float partialTicks, final int mouseX, final int mouseY) {
+    protected void renderBg(final MatrixStack stack, final float partialTicks, final int mouseX, final int mouseY) {
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bindTexture(PLOW_GUI_TEXTURES);
-        final int i = (this.width - this.xSize) / 2;
-        final int j = (this.height - this.ySize) / 2;
-        this.blit(stack, i, j, 0, 0, this.xSize, this.ySize);
+        this.minecraft.getTextureManager().bind(PLOW_GUI_TEXTURES);
+        final int i = (this.width - this.imageWidth) / 2;
+        final int j = (this.height - this.imageHeight) / 2;
+        this.blit(stack, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
 
     @Override
     public void render(final MatrixStack stack, final int mouseX, final int mouseY, final float partialTicks) {
         this.renderBackground(stack);
         super.render(stack, mouseX, mouseY, partialTicks);
-        this.renderHoveredTooltip(stack, mouseX, mouseY);
+        this.renderTooltip(stack, mouseX, mouseY);
     }
 }

@@ -50,14 +50,14 @@ public final class OregonSubscriber {
                         try {
                             oregon.run();
                         } finally {
-                            mc.enqueue(() -> this.setState(new IdleState()));
+                            mc.tell(() -> this.setState(new IdleState()));
                         }
                     }, "Oregon Trail 1978"), io));
                 }
             });
         }
         if (screen instanceof ChatScreen && (event.getKeyCode() == GLFW.GLFW_KEY_ENTER || event.getKeyCode() == GLFW.GLFW_KEY_KP_ENTER)) {
-            screen.getEventListeners().stream()
+            screen.children().stream()
                 .filter(TextFieldWidget.class::isInstance)
                 .map(TextFieldWidget.class::cast)
                 .findFirst().ifPresent(field -> {
@@ -69,7 +69,7 @@ public final class OregonSubscriber {
     }
 
     private Optional<Stat<?>> getSelectedStat(final StatsScreen screen) {
-        final AbstractList<?> list = screen.func_213116_d();
+        final AbstractList<?> list = screen.getActiveList();
         if (list == null) {
             return Optional.empty();
         }
@@ -84,7 +84,7 @@ public final class OregonSubscriber {
         if (!classCustomStatsList$Entry.isInstance(entry)) {
             return Optional.empty();
         }
-        final String statFieldName = ObfuscationReflectionHelper.remapName(INameMappingService.Domain.FIELD, "field_214405_b");
+        final String statFieldName = ObfuscationReflectionHelper.remapName(INameMappingService.Domain.FIELD, "stat");
         final Stat<?> stat;
         try {
             final Field fieldStat = classCustomStatsList$Entry.getDeclaredField(statFieldName);
@@ -139,7 +139,7 @@ public final class OregonSubscriber {
         void start() {
             this.thread.setDaemon(true);
             this.thread.start();
-            Minecraft.getInstance().displayGuiScreen(new ChatScreen("? "));
+            Minecraft.getInstance().setScreen(new ChatScreen("? "));
         }
 
         @Override
@@ -150,17 +150,17 @@ public final class OregonSubscriber {
             } catch (final InterruptedException ignored) {
             }
             final Minecraft mc = Minecraft.getInstance();
-            if (mc.currentScreen instanceof ChatScreen) {
-                mc.displayGuiScreen(null);
+            if (mc.screen instanceof ChatScreen) {
+                mc.setScreen(null);
             }
         }
 
         @Override
         public boolean onChat(final TextFieldWidget field) {
-            final String text = field.getText();
+            final String text = field.getValue();
             if (text.startsWith("?")) {
                 this.io.add(text.substring(1).trim());
-                field.setText("? ");
+                field.setValue("? ");
                 return true;
             }
             return false;
@@ -174,7 +174,7 @@ public final class OregonSubscriber {
             this.in.addLast(s);
             final ClientPlayerEntity player = Minecraft.getInstance().player;
             if (player != null) {
-                player.sendMessage(new StringTextComponent(s).mergeStyle(TextFormatting.ITALIC, TextFormatting.WHITE), Util.DUMMY_UUID);
+                player.sendMessage(new StringTextComponent(s).withStyle(TextFormatting.ITALIC, TextFormatting.WHITE), Util.NIL_UUID);
             }
         }
 
@@ -195,10 +195,10 @@ public final class OregonSubscriber {
         @Override
         public void print(final String s) {
             final Minecraft mc = Minecraft.getInstance();
-            mc.runImmediately(() -> {
+            mc.executeBlocking(() -> {
                 final ClientPlayerEntity player = mc.player;
                 if (player != null) {
-                    player.sendMessage(new StringTextComponent(s).mergeStyle(TextFormatting.ITALIC, TextFormatting.GRAY), Util.DUMMY_UUID);
+                    player.sendMessage(new StringTextComponent(s).withStyle(TextFormatting.ITALIC, TextFormatting.GRAY), Util.NIL_UUID);
                 }
             });
         }

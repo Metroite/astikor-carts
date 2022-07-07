@@ -30,9 +30,9 @@ public class AssembledTextureFactory {
         final ModelManager sprites = event.getModelManager();
         Object2ObjectMaps.fastForEach(this.textures, e -> {
             if (resources.hasResource(e.getKey())) {
-                textures.deleteTexture(e.getKey());
+                textures.release(e.getKey());
             } else {
-                textures.loadTexture(e.getKey(), e.getValue().assemble(sprites));
+                textures.register(e.getKey(), e.getValue().assemble(sprites));
             }
         });
     }

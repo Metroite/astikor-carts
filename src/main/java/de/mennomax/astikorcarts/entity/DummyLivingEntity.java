@@ -20,8 +20,8 @@ public abstract class DummyLivingEntity extends LivingEntity {
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
+    protected void defineSynchedData() {
+        super.defineSynchedData();
         this.setSilent(true);
         this.setNoGravity(true);
         this.setInvulnerable(true);
@@ -29,31 +29,31 @@ public abstract class DummyLivingEntity extends LivingEntity {
     }
 
     @Override
-    public Iterable<ItemStack> getArmorInventoryList() {
+    public Iterable<ItemStack> getArmorSlots() {
         return Collections.emptyList();
     }
 
     @Override
-    public ItemStack getItemStackFromSlot(final EquipmentSlotType slotIn) {
+    public ItemStack getItemBySlot(final EquipmentSlotType slotIn) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void setItemStackToSlot(final EquipmentSlotType slotIn, final ItemStack stack) {
+    public void setItemSlot(final EquipmentSlotType slotIn, final ItemStack stack) {
     }
 
     @Override
-    public HandSide getPrimaryHand() {
+    public HandSide getMainArm() {
         return HandSide.RIGHT;
     }
 
     @Override
-    public boolean isImmuneToExplosions() {
+    public boolean ignoreExplosion() {
         return true;
     }
 
     @Override
-    public PushReaction getPushReaction() {
+    public PushReaction getPistonPushReaction() {
         return PushReaction.IGNORE;
     }
 
@@ -63,32 +63,32 @@ public abstract class DummyLivingEntity extends LivingEntity {
     }
 
     @Override
-    public boolean isServerWorld() {
+    public boolean isEffectiveAi() {
         return false;
     }
 
     @Override
-    public boolean canBeCollidedWith() {
+    public boolean isPickable() {
         return false;
     }
 
     @Override
-    public boolean canBePushed() {
+    public boolean isPushable() {
         return false;
     }
 
     @Override
-    public boolean canBeAttackedWithItem() {
+    public boolean isAttackable() {
         return false;
     }
 
     @Override
-    protected boolean canTriggerWalking() {
+    protected boolean isMovementNoisy() {
         return false;
     }
 
     @Override
-    public boolean canBeHitWithPotion() {
+    public boolean isAffectedByPotions() {
         return false;
     }
 
@@ -98,12 +98,12 @@ public abstract class DummyLivingEntity extends LivingEntity {
     }
 
     @Override
-    public boolean isNonBoss() {
+    public boolean canChangeDimensions() {
         return false;
     }
 
     @Override
-    public boolean canAttack(final EntityType<?> type) {
+    public boolean canAttackType(final EntityType<?> type) {
         return false;
     }
 
@@ -113,25 +113,25 @@ public abstract class DummyLivingEntity extends LivingEntity {
     }
 
     @Override
-    public boolean isPotionApplicable(final EffectInstance effect) {
+    public boolean canBeAffected(final EffectInstance effect) {
         return false;
     }
 
     @Override
-    public void onKillCommand() {
+    public void kill() {
         this.remove();
     }
 
     @Override
-    public void func_241841_a(final ServerWorld world, final LightningBoltEntity bolt) {
+    public void thunderHit(final ServerWorld world, final LightningBoltEntity bolt) {
     }
 
     @Override
-    protected void collideWithEntity(final Entity entity) {
+    protected void doPush(final Entity entity) {
     }
 
     @Override
-    protected void collideWithNearbyEntities() {
+    protected void pushEntities() {
     }
 
     @Override
@@ -139,12 +139,12 @@ public abstract class DummyLivingEntity extends LivingEntity {
     }
 
     @Override
-    public boolean addPotionEffect(final EffectInstance effect) {
+    public boolean addEffect(final EffectInstance effect) {
         return false;
     }
 
     @Override
-    protected void updatePotionMetadata() {
+    protected void updateInvisibilityStatus() {
         this.setInvisible(true);
     }
 }
