@@ -3,11 +3,10 @@ package de.mennomax.astikorcarts.client;
 import de.mennomax.astikorcarts.AstikorCarts;
 import de.mennomax.astikorcarts.CommonInitializer;
 import de.mennomax.astikorcarts.client.gui.screen.inventory.PlowScreen;
-import de.mennomax.astikorcarts.client.oregon.OregonSubscriber;
-import de.mennomax.astikorcarts.client.renderer.entity.SupplyCartRenderer;
 import de.mennomax.astikorcarts.client.renderer.entity.AnimalCartRenderer;
 import de.mennomax.astikorcarts.client.renderer.entity.PlowRenderer;
 import de.mennomax.astikorcarts.client.renderer.entity.PostilionRenderer;
+import de.mennomax.astikorcarts.client.renderer.entity.SupplyCartRenderer;
 import de.mennomax.astikorcarts.client.renderer.texture.AssembledTexture;
 import de.mennomax.astikorcarts.client.renderer.texture.AssembledTextureFactory;
 import de.mennomax.astikorcarts.client.renderer.texture.Material;
@@ -16,23 +15,23 @@ import de.mennomax.astikorcarts.network.serverbound.ActionKeyMessage;
 import de.mennomax.astikorcarts.network.serverbound.OpenSupplyCartMessage;
 import de.mennomax.astikorcarts.network.serverbound.ToggleSlowMessage;
 import de.mennomax.astikorcarts.world.AstikorWorld;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.ScreenOpenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fmlclient.registry.ClientRegistry;
 import org.lwjgl.glfw.GLFW;
 
 @Mod.EventBusSubscriber(modid = AstikorCarts.ID, bus = Mod.EventBusSubscriber.Bus.MOD , value = Dist.CLIENT)
@@ -42,7 +41,7 @@ public final class ClientInitializer extends CommonInitializer {
     @Override
     public void init(final Context mod) {
         super.init(mod);
-        new OregonSubscriber().register(mod.bus());
+//        new OregonSubscriber().register(mod.bus());
         mod.bus().<TickEvent.ClientTickEvent>addListener(e -> {
             if (e.phase == TickEvent.Phase.END) {
                 final Minecraft mc = Minecraft.getInstance();
@@ -70,8 +69,8 @@ public final class ClientInitializer extends CommonInitializer {
                 }
             }
         });
-        mod.bus().<GuiOpenEvent>addListener(e -> {
-            if (e.getGui() instanceof InventoryScreen) {
+        mod.bus().<ScreenOpenEvent>addListener(e -> {
+            if (e.getScreen() instanceof InventoryScreen) {
                 final LocalPlayer player = Minecraft.getInstance().player;
                 if (player != null && player.getVehicle() instanceof SupplyCartEntity) {
                     e.setCanceled(true);

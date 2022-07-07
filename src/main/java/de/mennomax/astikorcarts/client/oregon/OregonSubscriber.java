@@ -1,31 +1,24 @@
 package de.mennomax.astikorcarts.client.oregon;
 
 import cpw.mods.modlauncher.api.INameMappingService;
-import de.mennomax.astikorcarts.AstikorCarts;
 import de.mennomax.astikorcarts.oregon.BasicProgram;
-import de.mennomax.astikorcarts.oregon.Oregon;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.achievement.StatsScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.stats.Stat;
-import net.minecraftforge.client.event.GuiScreenEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -34,13 +27,13 @@ public final class OregonSubscriber {
 
     private State state = new IdleState();
 
-    public void register(final IEventBus bus) {
+    /*public void register(final IEventBus bus) {
         bus.addListener(this::onScreenKeyPressed);
     }
 
-    private void onScreenKeyPressed(final GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
+    private void onScreenKeyPressed(final ScreenEvent.KeyboardKeyPressedEvent.Pre event) {
         final Minecraft mc = Minecraft.getInstance();
-        final Screen screen = event.getGui();
+        final Screen screen = event.getScreen();
         if (screen instanceof StatsScreen && (event.getKeyCode() == GLFW.GLFW_KEY_ENTER || event.getKeyCode() == GLFW.GLFW_KEY_KP_ENTER) && mc.player != null) {
             this.getSelectedStat((StatsScreen) screen).ifPresent(stat -> {
                 if (AstikorCarts.Stats.CART_ONE_CM.equals(stat.getValue()) && mc.player.getStats().getValue(stat) > 2040 * 100) {
@@ -66,7 +59,7 @@ public final class OregonSubscriber {
                     }
                 });
         }
-    }
+    }*/
 
     private Optional<Stat<?>> getSelectedStat(final StatsScreen screen) {
         final AbstractSelectionList<?> list = screen.getActiveList();

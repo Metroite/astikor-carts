@@ -1,38 +1,37 @@
 package de.mennomax.astikorcarts;
 
 import de.mennomax.astikorcarts.client.ClientInitializer;
-import de.mennomax.astikorcarts.entity.SupplyCartEntity;
 import de.mennomax.astikorcarts.entity.AnimalCartEntity;
 import de.mennomax.astikorcarts.entity.PlowEntity;
 import de.mennomax.astikorcarts.entity.PostilionEntity;
+import de.mennomax.astikorcarts.entity.SupplyCartEntity;
 import de.mennomax.astikorcarts.inventory.container.PlowContainer;
 import de.mennomax.astikorcarts.item.CartItem;
 import de.mennomax.astikorcarts.network.NetBuilder;
+import de.mennomax.astikorcarts.network.clientbound.UpdateDrawnMessage;
 import de.mennomax.astikorcarts.network.serverbound.ActionKeyMessage;
 import de.mennomax.astikorcarts.network.serverbound.OpenSupplyCartMessage;
 import de.mennomax.astikorcarts.network.serverbound.ToggleSlowMessage;
-import de.mennomax.astikorcarts.network.clientbound.UpdateDrawnMessage;
 import de.mennomax.astikorcarts.server.ServerInitializer;
 import de.mennomax.astikorcarts.util.DefRegister;
-import de.mennomax.astikorcarts.util.RegObject;
-import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.stats.StatFormatter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.core.Registry;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.extensions.IForgeContainerType;
+import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
+import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.function.Supplier;
 
@@ -54,16 +53,16 @@ public final class AstikorCarts {
         private Items() {
         }
 
-        private static final DefRegister.Forge<Item> R = REG.of(ForgeRegistries.ITEMS);
+        private static final DeferredRegister<Item> R = DeferredRegister.create(ForgeRegistries.ITEMS, AstikorCarts.ID);
 
-        public static final RegObject<Item, Item> WHEEL, SUPPLY_CART, PLOW, ANIMAL_CART;
+        public static final RegistryObject<Item> WHEEL, SUPPLY_CART, PLOW, ANIMAL_CART;
 
         static {
-            WHEEL = R.make("wheel", () -> new Item(new Item.Properties().tab(CreativeModeTab.TAB_MATERIALS)));
+            WHEEL = R.register("wheel", () -> new Item(new Item.Properties().tab(CreativeModeTab.TAB_MATERIALS)));
             final Supplier<Item> cart = () -> new CartItem(new Item.Properties().stacksTo(1).tab(CreativeModeTab.TAB_TRANSPORTATION));
-            SUPPLY_CART = R.make("supply_cart", cart);
-            PLOW = R.make("plow", cart);
-            ANIMAL_CART = R.make("animal_cart", cart);
+            SUPPLY_CART = R.register("supply_cart", cart);
+            PLOW = R.register("plow", cart);
+            ANIMAL_CART = R.register("animal_cart", cart);
         }
     }
 
@@ -71,24 +70,24 @@ public final class AstikorCarts {
         private EntityTypes() {
         }
 
-        private static final DefRegister.Forge<EntityType<?>> R = REG.of(ForgeRegistries.ENTITIES);
+        private static final DeferredRegister<EntityType<?>> R = DeferredRegister.create(ForgeRegistries.ENTITIES, AstikorCarts.ID);
 
-        public static final RegObject<EntityType<?>, EntityType<SupplyCartEntity>> SUPPLY_CART;
-        public static final RegObject<EntityType<?>, EntityType<PlowEntity>> PLOW;
-        public static final RegObject<EntityType<?>, EntityType<AnimalCartEntity>> ANIMAL_CART;
-        public static final RegObject<EntityType<?>, EntityType<PostilionEntity>> POSTILION;
+        public static final RegistryObject<EntityType<SupplyCartEntity>> SUPPLY_CART;
+        public static final RegistryObject<EntityType<PlowEntity>> PLOW;
+        public static final RegistryObject<EntityType<AnimalCartEntity>> ANIMAL_CART;
+        public static final RegistryObject<EntityType<PostilionEntity>> POSTILION;
 
         static {
-            SUPPLY_CART = R.make("supply_cart", () -> EntityType.Builder.of(SupplyCartEntity::new, MobCategory.MISC)
+            SUPPLY_CART = R.register("supply_cart", () -> EntityType.Builder.of(SupplyCartEntity::new, MobCategory.MISC)
                 .sized(1.5F, 1.4F)
                 .build(ID + ":supply_cart"));
-            PLOW = R.make("plow", () -> EntityType.Builder.of(PlowEntity::new, MobCategory.MISC)
+            PLOW = R.register("plow", () -> EntityType.Builder.of(PlowEntity::new, MobCategory.MISC)
                 .sized(1.3F, 1.4F)
                 .build(ID + ":plow"));
-            ANIMAL_CART = R.make("animal_cart", () -> EntityType.Builder.of(AnimalCartEntity::new, MobCategory.MISC)
+            ANIMAL_CART = R.register("animal_cart", () -> EntityType.Builder.of(AnimalCartEntity::new, MobCategory.MISC)
                 .sized(1.3F, 1.4F)
                 .build(ID + ":animal_cart"));
-            POSTILION = R.make("postilion", () -> EntityType.Builder.of(PostilionEntity::new, MobCategory.MISC)
+            POSTILION = R.register("postilion", () -> EntityType.Builder.of(PostilionEntity::new, MobCategory.MISC)
                 .sized(0.25F, 0.25F)
                 .noSummon()
                 .noSave()
@@ -100,35 +99,32 @@ public final class AstikorCarts {
         private SoundEvents() {
         }
 
-        private static final DefRegister.Forge<SoundEvent> R = REG.of(ForgeRegistries.SOUND_EVENTS);
+        private static final DeferredRegister<SoundEvent> R = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, AstikorCarts.ID);
 
-        public static final RegObject<SoundEvent, SoundEvent> CART_ATTACHED = R.make("entity.cart.attach", SoundEvent::new);
-        public static final RegObject<SoundEvent, SoundEvent> CART_DETACHED = R.make("entity.cart.detach", SoundEvent::new);
-        public static final RegObject<SoundEvent, SoundEvent> CART_PLACED = R.make("entity.cart.place", SoundEvent::new);
+        public static final RegistryObject<SoundEvent> CART_ATTACHED = R.register("entity.cart.attach", () -> new SoundEvent(new ResourceLocation(AstikorCarts.ID, "entity.cart.attach")));
+        public static final RegistryObject<SoundEvent> CART_DETACHED = R.register("entity.cart.detach", () -> new SoundEvent(new ResourceLocation(AstikorCarts.ID, "entity.cart.detach")));
+        public static final RegistryObject<SoundEvent> CART_PLACED = R.register("entity.cart.place", () -> new SoundEvent(new ResourceLocation(AstikorCarts.ID, "entity.cart.place")));
     }
 
     public static final class Stats {
         private Stats() {
         }
 
-        private static final DefRegister.Vanilla<ResourceLocation, StatFormatter> R = REG.of(Registry.CUSTOM_STAT, net.minecraft.stats.Stats.CUSTOM::get, rl -> StatFormatter.DEFAULT);
-
-        public static final ResourceLocation CART_ONE_CM = R.make("cart_one_cm", rl -> rl, rl -> StatFormatter.DISTANCE);
+//        private static final DeferredRegister<StatType<?>> R = DeferredRegister.create(ForgeRegistries.STAT_TYPES, AstikorCarts.ID);
+//        public static final RegistryObject<StatType<ResourceLocation>> CART_ONE_CM = R.register("cart_one_cm", () -> new StatType<>(Registry.CUSTOM_STAT));
     }
 
     public static final class ContainerTypes {
         private ContainerTypes() {
         }
 
-        private static final DefRegister.Forge<MenuType<?>> R = REG.of(ForgeRegistries.CONTAINERS);
-
-        public static final RegObject<MenuType<?>, MenuType<PlowContainer>> PLOW_CART = R.make("plow", () -> IForgeContainerType.create(PlowContainer::new));
-    }
+        private static final DeferredRegister<MenuType<?>> R = DeferredRegister.create(ForgeRegistries.CONTAINERS, AstikorCarts.ID);
+        public static final RegistryObject<MenuType<PlowContainer>> PLOW_CART = R.register("plow", () -> IForgeMenuType.create((PlowContainer::new)));    }
 
     public AstikorCarts() {
         final Initializer.Context ctx = new InitContext();
-        DistExecutor.runForDist(() -> ClientInitializer::new, () -> ServerInitializer::new).init(ctx);
-        REG.registerAll(ctx.modBus(), Items.R, EntityTypes.R, SoundEvents.R, ContainerTypes.R, Stats.R);
+        DistExecutor.safeRunForDist(() -> ClientInitializer::new, () -> ServerInitializer::new).init(ctx);
+//        REG.registerAll(ctx.modBus(), Items.R, EntityTypes.R, SoundEvents.R, ContainerTypes.R, Stats.R);
     }
 
     private static class InitContext implements Initializer.Context {

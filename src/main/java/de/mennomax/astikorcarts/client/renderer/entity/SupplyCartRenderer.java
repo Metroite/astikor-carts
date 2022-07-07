@@ -344,8 +344,8 @@ public final class SupplyCartRenderer extends DrawnRenderer<SupplyCartEntity, Su
 
     private enum Contents {
         FLOWERS(s -> s.getItem() instanceof BlockItem && s.is(ItemTags.FLOWERS), SupplyCartRenderer::renderFlowers),
-        PAINTINGS(s -> s.getItem() == Items.PAINTING, SupplyCartRenderer::renderPaintings),
-        WHEEL(s -> AstikorCarts.Items.WHEEL.test(s.getItem()), SupplyCartRenderer::renderWheel),
+        PAINTINGS(s -> Items.PAINTING.equals(s.getItem()), SupplyCartRenderer::renderPaintings),
+        WHEEL(s -> AstikorCarts.Items.WHEEL.get().equals(s.getItem()), SupplyCartRenderer::renderWheel),
         SUPPLIES(s -> true, SupplyCartRenderer::renderSupplies);
 
         private final Predicate<? super ItemStack> predicate;
